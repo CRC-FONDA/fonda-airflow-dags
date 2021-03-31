@@ -67,7 +67,7 @@ task_3 = BashOperator(
 
 task_4 = KubernetesPodOperator(
     task_id = "python_say_hello",
-    namespace="default",
+    namespace="airflow", # this is the airflow namespace in the fonda reference stack
     image="python:3.6",
     name="python_hello",
     cmds=["python", "-c"],
