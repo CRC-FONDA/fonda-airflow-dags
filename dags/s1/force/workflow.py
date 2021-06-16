@@ -4,10 +4,23 @@ from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import Kubernete
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
 
-#
+
+# Working environment variables
+HOST_DATA_PATH = '/home/vasilis/airflow/data/'
+REMOTE_DATA_PATH = '/data/'
+
+# HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
+# What sensors we're getting the lvl1 data from
+sensors_level1 = 'LT04,LT05,LE07,S2A'
+
+start_date = "20060601"
+end_date = "20061231"
+daterange = start_date + ',' + end_date
+aoi_path = REMOTE_DATA_PATH + '/input/vector/aoi.gpkg'
+
 # Kubernetes config: namespace, resources, volume and volume_mounts
-#
 namespace = "default"
+
 compute_resources = {
     'request_cpu': '200m',
     'request_memory': '512Mi',
@@ -25,27 +38,9 @@ default_args = {
     'retry_delay': timedelta(minutes=100),
 }
 
-# Working environment variables
-HOST_DATA_PATH = '/home/vasilis/airflow/data/'
-REMOTE_DATA_PATH = '/data/'
-
-# HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
-# TODO: Move those accordingly
-
-# What sensors we're getting the lvl1 data from
-sensors_level1 = 'LT04,LT05,LE07,S2A'
-
-start_date = "20060601"
-end_date = "20061231"
-daterange = start_date + ',' + end_date
-aoi_path = REMOTE_DATA_PATH + '/input/vector/aoi.gpkg'
-
 volume = k8s.V1Volume(
-   name="force-volume",
-   host_path=k8s.V1HostPathVolumeSource(
-       path=HOST_DATA_PATH,
-       type="DirectoryOrCreate"
-   )
+    name="force-volume",
+    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="force-volume-claim"),
 )
 
 volume_mount = k8s.V1VolumeMount(
@@ -73,7 +68,7 @@ with DAG(
         task_id='download_auxiliary',
         image='bash',
         cmds=["/bin/sh","-c"],
-        arguments=['wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input/ /home/vasilis/airflow/data'],
+        arguments=['wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz'],
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
@@ -114,9 +109,9 @@ with DAG(
         )
 
         # Maybe I have to dynamically create volumes for each workflow run?
+        # Do I need all tasks to be kubernetes pods - given that I run airflow in a Kubernetes environment anyway?
 
-    # download_auxiliary >> download_level_1
-    generate_allowed_tiles
+    download_auxiliary >> download_level_1 >> generate_allowed_tiles
 
 
     
