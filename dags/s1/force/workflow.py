@@ -14,7 +14,8 @@ sensors_level1 = 'LT04,LT05,LE07,S2A'
 start_date = "20060601"
 end_date = "20060831"
 daterange = start_date + ',' + end_date
-aoi_path = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
+aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
+datacube_folderpath = MOUNT_DATA_PATH + '/input/grid/datacube-definition.prj'
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
@@ -24,16 +25,6 @@ compute_resources = {
     'request_memory': '512Mi',
     'limit_cpu': '500m',
     'limit_memory': '1Gi'
-}
-
-default_args = {
-    'owner': 'FONDA S1',
-    'depends_on_past': False,
-    'email': ['vasilis.bountris@informatik.hu-berlin.de'],
-    'email_on_failure': False,
-    'email_on_retry': False,
-    'retries': 0,
-    'retry_delay': timedelta(minutes=100),
 }
 
 volume = k8s.V1Volume(
@@ -49,6 +40,19 @@ volume_mount = k8s.V1VolumeMount(
 )
 
 security_context = k8s.V1SecurityContext(run_as_user=0)
+
+# DAG
+
+default_args = {
+    'owner': 'FONDA S1',
+    'depends_on_past': False,
+    'email': ['vasilis.bountris@informatik.hu-berlin.de'],
+    'email_on_failure': False,
+    'email_on_retry': False,
+    'retries': 0,
+    'retry_delay': timedelta(minutes=100),
+}
+
 
 with DAG(
         'force',
@@ -86,7 +90,7 @@ with DAG(
         task_id='download_level_1',
         cmds=["/bin/sh","-c"],
         arguments=[
-            f'mkdir metadata && force-level1-csd -u -s {sensors_level1} metadata && mkdir data && force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 metadata/ data/ queue.txt {aoi_path}'],
+            f'mkdir metadata && force-level1-csd -u -s {sensors_level1} metadata && mkdir data && force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 metadata/ data/ queue.txt {aoi_filepath}'],
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
@@ -101,7 +105,7 @@ with DAG(
         image='davidfrantz/force',
         task_id='generate_allowed_tiles',
         cmds=["/bin/sh","-c"],
-        arguments=[f'force-tile-extent {aoi_path} tmp tileAllow.txt && rm -r tmp'],
+        arguments=[f'force-tile-extent {aoi_filepath} {datacube_folderpath} tileAllow.txt'],
         security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
@@ -110,6 +114,7 @@ with DAG(
         dag=dag
         )
 
+        # How do I add ad hoc files
         # Maybe I have to dynamically create volumes for each workflow run?
         # Do I need all tasks to be kubernetes pods - given that I run airflow in a Kubernetes environment anyway?
 
