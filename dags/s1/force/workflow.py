@@ -4,19 +4,17 @@ from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import Kubernete
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
 
-
 # Working environment variables
-HOST_DATA_PATH = '/home/vasilis/airflow/data/'
-REMOTE_DATA_PATH = '/data/'
+MOUNT_DATA_PATH = '/data'
 
 # HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
 # What sensors we're getting the lvl1 data from
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
 start_date = "20060601"
-end_date = "20061231"
+end_date = "20060831"
 daterange = start_date + ',' + end_date
-aoi_path = REMOTE_DATA_PATH + '/input/vector/aoi.gpkg'
+aoi_path = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
@@ -40,12 +38,12 @@ default_args = {
 
 volume = k8s.V1Volume(
     name="force-volume",
-    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name="force-volume-claim"),
+    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(claim_name='force-pvc')
 )
 
 volume_mount = k8s.V1VolumeMount(
         name = "force-volume",
-        mount_path=REMOTE_DATA_PATH,
+        mount_path=MOUNT_DATA_PATH,
         sub_path=None,
         read_only=False
 )
@@ -68,7 +66,7 @@ with DAG(
         task_id='download_auxiliary',
         image='bash',
         cmds=["/bin/sh","-c"],
-        arguments=['wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz'],
+        arguments=[f'wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}'],
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
