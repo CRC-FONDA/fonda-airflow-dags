@@ -48,6 +48,8 @@ volume_mount = k8s.V1VolumeMount(
         read_only=False
 )
 
+security_context = k8s.V1SecurityContext(run_as_user=0)
+
 with DAG(
         'force',
         default_args=default_args,
@@ -69,6 +71,7 @@ with DAG(
         arguments=[f'wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}'],
         resources=compute_resources,
         volumes=[volume],
+        security_context=security_context,
         volume_mounts=[volume_mount],
         get_logs=True,
         dag=dag
@@ -87,6 +90,7 @@ with DAG(
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
+        security_context=security_context,
         get_logs=True,
         dag=dag
         )
@@ -97,8 +101,8 @@ with DAG(
         image='davidfrantz/force',
         task_id='generate_allowed_tiles',
         cmds=["/bin/sh","-c"],
-        arguments=["sleep 10000"],
-        # arguments=['force-tile-extent {aoi_path} tmp/ tileAllow.txt && rm -r tmp'],
+        arguments=[f'force-tile-extent {aoi_path} tmp tileAllow.txt && rm -r tmp'],
+        security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
