@@ -145,7 +145,19 @@ with DAG(
         # Maybe I have to dynamically create volumes for each workflow run?
         # Do I need all tasks to be kubernetes pods - given that I run airflow in a Kubernetes environment anyway?
 
-    download_auxiliary >> download_level_1 >> generate_allowed_tiles
+    level_2_process = KubernetesPodOperator(
+        name='level_2_process',
+        namespace=namespace,
+        image='davidfrantz/force',
+        task_id='level_2_process',
+        cmds=["src/level_2_preprocessing.py"],
+        security_context=security_context,
+        resources=compute_resources,
+        volumes=[volume],
+        volume_mounts=[volume_mount],
+        get_logs=True,
+        dag=dag
+        )
 
+    [download_auxiliary >> download_level_1] >> [generate_allowed_tiles >> generate_analysis_mask] >> level_2_process
 
-    
