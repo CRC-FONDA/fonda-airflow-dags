@@ -99,7 +99,10 @@ with DAG(
         task_id='download_level_1',
         cmds=["/bin/sh","-c"],
         arguments=[
-            f'mkdir metadata && force-level1-csd -u -s {sensors_level1} metadata && mkdir data && force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 metadata/ data/ queue.txt {aoi_filepath}'],
+            f'mkdir {image_metadata_folderpath} && \
+              force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
+              mkdir {image_folderpath} && \
+              force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} queue.txt {aoi_filepath}'],
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
@@ -114,7 +117,7 @@ with DAG(
         image='davidfrantz/force',
         task_id='generate_allowed_tiles',
         cmds=["/bin/sh","-c"],
-        arguments=[f'force-tile-extent {aoi_filepath} {datacube_folderpath} tileAllow.txt'],
+        arguments=[f'force-tile-extent {aoi_filepath} {datacube_folderpath} {allowed_tiles_filepath}'],
         security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
