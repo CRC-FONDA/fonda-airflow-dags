@@ -126,7 +126,22 @@ with DAG(
         dag=dag
         )
 
-        # How do I add ad hoc files
+    generate_analysis_mask = KubernetesPodOperator(
+        name='generate_analysis_mask',
+        namespace=namespace,
+        image='davidfrantz/force',
+        task_id='generate_analysis_mask',
+        cmds=["/bin/sh","-c"],
+        arguments=[f'mkdir {masks_folderpath} && cp {datacube_folderpath}/datacube-definition.prj {masks_folderpath} && force-cube {aoi_filepath} {masks_folderpath} rasterize {mask_resolution}'],
+        security_context=security_context,
+        resources=compute_resources,
+        volumes=[volume],
+        volume_mounts=[volume_mount],
+        get_logs=True,
+        dag=dag
+        )
+
+        # TODO: make all environment variables k8s objects and passthem for level 2 processing
         # Maybe I have to dynamically create volumes for each workflow run?
         # Do I need all tasks to be kubernetes pods - given that I run airflow in a Kubernetes environment anyway?
 
