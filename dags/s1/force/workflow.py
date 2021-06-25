@@ -15,7 +15,16 @@ start_date = "20060601"
 end_date = "20060831"
 daterange = start_date + ',' + end_date
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
-datacube_folderpath = MOUNT_DATA_PATH + '/input/grid/datacube-definition.prj'
+datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
+image_folderpath = MOUNT_DATA_PATH + '/image_data'
+image_metadata_folderpath = MOUNT_DATA_PATH + '/image_metadata'
+allowed_tiles_filepath = MOUNT_DATA_PATH + '/allowed_tiles.txt'
+dem_folderpath = MOUNT_DATA_PATH + '/input/dem'
+wvdb = MOUNT_DATA_PATH + '/input/wvdb'
+masks_folderpath = MOUNT_DATA_PATH + '/masks'
+
+mask_resolution = 30
+
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
