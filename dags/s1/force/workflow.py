@@ -206,5 +206,87 @@ with DAG(
         dag=dag
         )
 
-    [download_auxiliary >> download_level_1] >> [generate_allowed_tiles >> generate_analysis_mask] >> level_2_process
+    # process_tsa=KubernetesPodOperator(
+        # name='process_tsa',
+        # namespace=namespace,
+        # image='davidfrantz/force',
+        # task_id='process_tsa',
+        # cmds=["/bin/sh","-c"],
+        # arguments=["""\
+        # force-parameter . TSA 0
+        # mv LEVEL2-skeleton.prm $PARAM
+        # sleep 1000000
+        # # processing extent
+        # # https://github.com/CRC-FONDA/B5-Workflow-Earth-Observation/blob/main/EO-01/level2processing/processHigherLevel.nf
+
+        # XMIN=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 1 | sort | head -n 1)
+        # XMAX=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 1 | sort | tail -n 1)
+        # YMIN=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 2 | sort | head -n 1)
+        # YMAX=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 2 | sort | tail -n 1)
+        # # pathes
+        # sed -i "/^DIR_LOWER /cDIR_LOWER = ard/" $PARAM
+        # sed -i "/^DIR_HIGHER /cDIR_HIGHER = trend/" $PARAM
+        # sed -i "/^DIR_MASK /cDIR_MASK = mask/" $PARAM
+        # sed -i "/^BASE_MASK /cBASE_MASK = aoi.tif" $PARAM
+        # sed -i "/^FILE_ENDMEM /cFILE_ENDMEM = $ENDMEMBER" $PARAM
+        # sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
+
+        # # threading
+        # sed -i "/^NTHREAD_READ /cNTHREAD_READ = 4" $PARAM
+        # sed -i "/^NTHREAD_COMPUTE /cNTHREAD_COMPUTE = 104" $PARAM
+        # sed -i "/^NTHREAD_WRITE /cNTHREAD_WRITE = 4" $PARAM
+
+        # # extent and resolution
+        # sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $XMIN $XMAX" $PARAM
+        # sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $YMIN $YMAX" $PARAM
+        # sed -i "/^RESOLUTION /cRESOLUTION = 30" $PARAM
+
+        # # sensors
+        # sed -i "/^SENSORS /cSENSORS = LND04 LND05 LND07" $PARAM
+
+        # # date range
+        # # TODO: dates dont have the same format
+        # sed -i "/^DATE_RANGE /cDATE_RANGE = $START_DATE $END_DATE" $PARAM
+
+        # # spectral index
+        # sed -i "/^INDEX /cINDEX = SMA" $PARAM
+
+        # # interpolation
+        # sed -i "/^INT_DAY /cINT_DAY = 8" $PARAM
+        # sed -i "/^OUTPUT_TSI /cOUTPUT_TSI = TRUE" $PARAM
+
+        # # polar metrics
+        # sed -i "/^POL /cPOL = VPS VBL VSA" $PARAM
+        # sed -i "/^OUTPUT_POL /cOUTPUT_POL = TRUE" $PARAM
+        # sed -i "/^OUTPUT_TRO /cOUTPUT_TRO = TRUE" $PARAM
+        # sed -i "/^OUTPUT_CAO /cOUTPUT_CAO = TRUE" $PARAM
+
+        # date
+        # echo "DONE"
+        # date
+            # """],
+
+        # security_context=security_context,
+        # resources=compute_resources,
+        # volumes=[volume],
+        # volume_mounts=[volume_mount],
+        # env_vars={
+            # 'DATA':image_folderpath,
+            # 'CUBEFILE':datacube_filepath,
+            # 'DEM':dem_folderpath,
+            # 'WVDB':wvdb,
+            # 'TILE':allowed_tiles_filepath,
+            # 'NTHREAD':'2',
+            # 'PARAM':"tsa.prm"
+            # 'ENDMEMBER':'
+            # },
+        # get_logs=True,
+        # dag=dag
+        # )
+
+    dag_start = DummyOperator(task_id='dag_start', dag=dag)
+    wait_for_downloads = DummyOperator(task_id='wait_for_downloads', dag=dag)
+    
+    dag_start >> download_auxiliary >> download_level_1 >> wait_for_downloads >> generate_allowed_tiles >> generate_analysis_mask >> preprocess_level2
+
 
