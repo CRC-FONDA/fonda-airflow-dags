@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
+from airflow.operators.dummy_operator import DummyOperator
 
 # Working environment variables
 MOUNT_DATA_PATH = '/data'
@@ -143,20 +144,64 @@ with DAG(
         dag=dag
         )
 
-        # TODO: make all environment variables k8s objects and passthem for level 2 processing
-        # Maybe I have to dynamically create volumes for each workflow run?
-        # Do I need all tasks to be kubernetes pods - given that I run airflow in a Kubernetes environment anyway?
-
-    level_2_process = KubernetesPodOperator(
-        name='level_2_process',
+    preprocess_level2 = KubernetesPodOperator(
+        name='preprocess_level2',
         namespace=namespace,
         image='davidfrantz/force',
-        task_id='level_2_process',
-        cmds=["src/level_2_preprocessing.py"],
+        task_id='preprocess_level2',
+        cmds=["/bin/sh","-c"],
+        arguments=["""\
+        mkdir level2_ard
+        mkdir level2_log
+        mkdir level2_tmp
+        force-parameter . LEVEL2 0
+        mv LEVEL2-skeleton.prm $PARAM
+        # read grid definition
+        CRS=$(sed '1q;d' $CUBEFILE)
+        ORIGINX=$(sed '2q;d' $CUBEFILE)
+        ORIGINY=$(sed '3q;d' $CUBEFILE)
+        TILESIZE=$(sed '6q;d' $CUBEFILE)
+        BLOCKSIZE=$(sed '7q;d' $CUBEFILE)
+        # set parameters
+        # sed -i "/^PARALLEL_READS /cPARALLEL_READS = TRUE" $PARAM
+        # sed -i "/^DELAY /cDELAY = 2" $PARAM
+        # sed -i "/^NPROC /cNPROC = 56" $PARAM
+        sed -i "/^FILE_QUEUE /cFILE_QUEUE = /data/queue.txt" $PARAM
+        sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = level2_ard/" $PARAM
+        sed -i "/^DIR_LOG /cDIR_LOG = level2_log/" $PARAM
+        sed -i "/^DIR_TEMP /cDIR_TEMP = level2_tmp/" $PARAM
+        sed -i "/^FILE_DEM /cFILE_DEM = $DEM/global_srtm-aster.vrt" $PARAM
+        sed -i "/^DIR_WVPLUT /cDIR_WVPLUT = $WVDB" $PARAM
+        sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
+        sed -i "/^TILE_SIZE /cTILE_SIZE = $TILESIZE" $PARAM
+        sed -i "/^BLOCK_SIZE /cBLOCK_SIZE = $BLOCKSIZE" $PARAM
+        sed -i "/^ORIGIN_LON /cORIGIN_LON = $ORIGINX" $PARAM
+        sed -i "/^ORIGIN_LAT /cORIGIN_LAT = $ORIGINY" $PARAM
+        sed -i "/^PROJECTION /cPROJECTION = $CRS" $PARAM
+        sed -i "/^NTHREAD /cNTHREAD = 2" $PARAM
+        echo "STARTING LEVEL2 PROCESSING"
+        date
+        force-level2 $PARAM
+        cp -r level2_ard /data/level2_ard
+        cp -r level2_log /data/level2_log
+        cp ard.prm /data/ard.prm
+        echo "DONE"
+        date
+            """],
+
         security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
+        env_vars={
+            'DATA':image_folderpath,
+            'CUBEFILE':datacube_filepath,
+            'DEM':dem_folderpath,
+            'WVDB':wvdb,
+            'TILE':allowed_tiles_filepath,
+            'NTHREAD':'2',
+            'PARAM':"ard.prm"
+            },
         get_logs=True,
         dag=dag
         )
