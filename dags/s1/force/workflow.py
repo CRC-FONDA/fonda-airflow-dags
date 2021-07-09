@@ -12,16 +12,18 @@ MOUNT_DATA_PATH = '/data'
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
 start_date = "20060601"
-end_date = "20060831"
+end_date = "200120831"
 daterange = start_date + ',' + end_date
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
+datacube_filepath = datacube_folderpath + '/' + 'datacube-definition.prj'
 image_folderpath = MOUNT_DATA_PATH + '/image_data'
 image_metadata_folderpath = MOUNT_DATA_PATH + '/image_metadata'
 allowed_tiles_filepath = MOUNT_DATA_PATH + '/allowed_tiles.txt'
 dem_folderpath = MOUNT_DATA_PATH + '/input/dem'
 wvdb = MOUNT_DATA_PATH + '/input/wvdb'
 masks_folderpath = MOUNT_DATA_PATH + '/masks'
+endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
 
 mask_resolution = 30
 
