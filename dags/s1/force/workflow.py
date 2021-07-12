@@ -12,8 +12,8 @@ MOUNT_DATA_PATH = '/data'
 # What sensors we're getting the lvl1 data from
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
-start_date = "20060601"
-end_date = "200120831"
+start_date = "20060101"
+end_date = "20120101"
 daterange = start_date + ',' + end_date
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
