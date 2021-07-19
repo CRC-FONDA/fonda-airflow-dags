@@ -25,6 +25,7 @@ dem_folderpath = MOUNT_DATA_PATH + '/input/dem'
 wvdb = MOUNT_DATA_PATH + '/input/wvdb'
 masks_folderpath = MOUNT_DATA_PATH + '/masks'
 endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
+queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
 
 mask_resolution = 30
 
@@ -102,10 +103,10 @@ with DAG(
         task_id='download_level_1',
         cmds=["/bin/sh","-c"],
         arguments=[
-            f'mkdir {image_metadata_folderpath} && \
+            f'mkdir -p {image_metadata_folderpath} && \
               force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
-              mkdir {image_folderpath} && \
-              force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} queue.txt {aoi_filepath}'],
+              mkdir -p {image_folderpath} && \
+              force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}'],
         resources=compute_resources,
         volumes=[volume],
         volume_mounts=[volume_mount],
@@ -135,7 +136,7 @@ with DAG(
         image='davidfrantz/force',
         task_id='generate_analysis_mask',
         cmds=["/bin/sh","-c"],
-        arguments=[f'mkdir {masks_folderpath} && cp {datacube_folderpath}/datacube-definition.prj {masks_folderpath} && force-cube {aoi_filepath} {masks_folderpath} rasterize {mask_resolution}'],
+        arguments=[f'mkdir -p {masks_folderpath} && cp {datacube_folderpath}/datacube-definition.prj {masks_folderpath} && force-cube {aoi_filepath} {masks_folderpath} rasterize {mask_resolution}'],
         security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
