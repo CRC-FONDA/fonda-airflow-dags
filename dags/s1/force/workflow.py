@@ -192,11 +192,44 @@ with DAG(
             'WVDB':wvdb,
             'TILE':allowed_tiles_filepath,
             'NTHREAD':'2',
-            'PARAM':"ard.prm"
+            'PARAM':"/data/param_files/ard.prm"
             },
         get_logs=True,
         dag=dag
         )
+
+    preprocess_level2_tasks = []
+    for i in range(10):
+        index = str(i)
+        preprocess_level2_task = KubernetesPodOperator(
+            name='preprocess_level2_' + index,
+            namespace=namespace,
+            image='davidfrantz/force',
+            task_id='preprocess_level2_' + index,
+            cmds=["/bin/sh","-c"],
+            arguments=["""\
+            echo "STARTING LEVEL2 PROCESSING"
+            cp $GLOBAL_PARAM $PARAM
+            sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
+            date
+            force-level2 $PARAM
+            echo "DONE"
+            date
+                """],
+            # TODO: $PARAM here is useless, we'll need context specific parameter file
+            security_context=security_context,
+            resources=compute_resources,
+            volumes=[volume],
+            volume_mounts=[volume_mount],
+            env_vars={
+                'GLOBAL_PARAM': '/data/param_files/ard.prm',
+                'PARAM':f"/data/param_files/ard_0{index}.prm",
+                'QUEUE_FILE': f"/data/queue_0{index}.txt",
+                },
+            get_logs=True,
+            dag=dag
+            )
+        preprocess_level2_tasks.append(preprocess_level2_task)
 
     # process_tsa=KubernetesPodOperator(
         # name='process_tsa',
@@ -276,9 +309,20 @@ with DAG(
         # dag=dag
         # )
 
-    dag_start = DummyOperator(task_id='dag_start', dag=dag)
+    dag_start = DummyOperator(task_id='Start', dag=dag)
     wait_for_downloads = DummyOperator(task_id='wait_for_downloads', dag=dag)
     
-    dag_start >> download_auxiliary >> download_level_1 >> wait_for_downloads >> generate_allowed_tiles >> generate_analysis_mask >> preprocess_level2
+    # dag_start >> download_auxiliary >> download_level_1 >> wait_for_downloads >> generate_allowed_tiles >> generate_analysis_mask >> preprocess_level2
 
+    # TODO: Make a separate download dag with common environment variables
+    # TODO: Check thread and cpu assignment
 
+    
+
+    wait_for_downloads.set_upstream(dag_start)
+    generate_allowed_tiles.set_upstream(wait_for_downloads)
+    generate_analysis_mask.set_upstream(wait_for_downloads)
+    prepare_level2.set_upstream(generate_allowed_tiles)
+    prepare_level2.set_upstream(generate_analysis_mask)
+    for task in preprocess_level2_tasks:
+        task.set_upstream(prepare_level2)
