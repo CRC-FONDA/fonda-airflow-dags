@@ -145,16 +145,17 @@ with DAG(
         dag=dag
         )
 
-    preprocess_level2 = KubernetesPodOperator(
-        name='preprocess_level2',
+    prepare_level2 = KubernetesPodOperator(
+        name='prepare_level2',
         namespace=namespace,
-        image='davidfrantz/force',
-        task_id='preprocess_level2',
+        image='bash',
+        task_id='prepare_level2',
         cmds=["/bin/sh","-c"],
-        arguments=["""\
-        mkdir level2_ard
-        mkdir level2_log
-        mkdir level2_tmp
+        arguments=[f"""split -l 10 --numeric-suffixes data/queue.txt queue_ --additional-suffix=.txt
+        mkdir /data/param_files
+        mkdir /data/level2_ard
+        mkdir /data/level2_log
+        mkdir /data/level2_tmp
         force-parameter . LEVEL2 0
         mv LEVEL2-skeleton.prm $PARAM
         # read grid definition
@@ -167,10 +168,9 @@ with DAG(
         # sed -i "/^PARALLEL_READS /cPARALLEL_READS = TRUE" $PARAM
         # sed -i "/^DELAY /cDELAY = 2" $PARAM
         # sed -i "/^NPROC /cNPROC = 56" $PARAM
-        sed -i "/^FILE_QUEUE /cFILE_QUEUE = /data/queue.txt" $PARAM
-        sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = level2_ard/" $PARAM
-        sed -i "/^DIR_LOG /cDIR_LOG = level2_log/" $PARAM
-        sed -i "/^DIR_TEMP /cDIR_TEMP = level2_tmp/" $PARAM
+        sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/level2_ard/" $PARAM
+        sed -i "/^DIR_LOG /cDIR_LOG = /data/level2_log/" $PARAM
+        sed -i "/^DIR_TEMP /cDIR_TEMP = /data/level2_tmp/" $PARAM
         sed -i "/^FILE_DEM /cFILE_DEM = $DEM/global_srtm-aster.vrt" $PARAM
         sed -i "/^DIR_WVPLUT /cDIR_WVPLUT = $WVDB" $PARAM
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
@@ -180,16 +180,7 @@ with DAG(
         sed -i "/^ORIGIN_LAT /cORIGIN_LAT = $ORIGINY" $PARAM
         sed -i "/^PROJECTION /cPROJECTION = $CRS" $PARAM
         sed -i "/^NTHREAD /cNTHREAD = 2" $PARAM
-        echo "STARTING LEVEL2 PROCESSING"
-        date
-        force-level2 $PARAM
-        cp -r level2_ard /data/level2_ard
-        cp -r level2_log /data/level2_log
-        cp ard.prm /data/ard.prm
-        echo "DONE"
-        date
             """],
-
         security_context=security_context,
         resources=compute_resources,
         volumes=[volume],
