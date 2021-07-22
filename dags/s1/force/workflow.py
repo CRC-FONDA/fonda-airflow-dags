@@ -321,7 +321,10 @@ with DAG(
 
     
 
-    wait_for_downloads.set_upstream(dag_start)
+    download_level_1.set_upstream(dag_start)
+    download_auxiliary.set_upstream(dag_start)
+    wait_for_downloads.set_upstream(download_level_1)
+    wait_for_downloads.set_upstream(download_auxiliary)
     generate_allowed_tiles.set_upstream(wait_for_downloads)
     generate_analysis_mask.set_upstream(wait_for_downloads)
     prepare_level2.set_upstream(generate_allowed_tiles)
