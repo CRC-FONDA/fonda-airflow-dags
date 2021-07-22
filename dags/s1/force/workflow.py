@@ -13,7 +13,7 @@ MOUNT_DATA_PATH = '/data'
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
 start_date = "20060101"
-end_date = "20120101"
+end_date = "20080101"
 daterange = start_date + ',' + end_date
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
@@ -218,7 +218,6 @@ with DAG(
             echo "DONE"
             date
                 """],
-            # TODO: $PARAM here is useless, we'll need context specific parameter file
             security_context=security_context,
             resources=compute_resources,
             volumes=[volume],
@@ -317,7 +316,6 @@ with DAG(
     # dag_start >> download_auxiliary >> download_level_1 >> wait_for_downloads >> generate_allowed_tiles >> generate_analysis_mask >> preprocess_level2
 
     # TODO: Make a separate download dag with common environment variables
-    # TODO: Check thread and cpu assignment
 
     
 
