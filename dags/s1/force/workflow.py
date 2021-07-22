@@ -34,10 +34,10 @@ mask_resolution = 30
 namespace = "default"
 
 compute_resources = {
-    'request_cpu': '1000m',
+    'request_cpu': '500m',
     'request_memory': '512Mi',
-    'limit_cpu': '2000m',
-    'limit_memory': '5Gi'
+    'limit_cpu': '500m',
+    'limit_memory': '2Gi'
 }
 
 volume = k8s.V1Volume(
@@ -148,14 +148,15 @@ with DAG(
     prepare_level2 = KubernetesPodOperator(
         name='prepare_level2',
         namespace=namespace,
-        image='bash',
+        image='davidfrantz/force',
         task_id='prepare_level2',
         cmds=["/bin/sh","-c"],
-        arguments=[f"""split -l 10 --numeric-suffixes data/queue.txt queue_ --additional-suffix=.txt
-        mkdir /data/param_files
-        mkdir /data/level2_ard
-        mkdir /data/level2_log
-        mkdir /data/level2_tmp
+        arguments=[f"""mkdir -p /data/queue_files
+        split -l$((`wc -l < /data/queue.txt`/10)) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
+        mkdir -p /data/param_files
+        mkdir -p /data/level2_ard
+        mkdir -p /data/level2_log
+        mkdir -p /data/level2_tmp
         force-parameter . LEVEL2 0
         mv LEVEL2-skeleton.prm $PARAM
         # read grid definition
@@ -169,9 +170,10 @@ with DAG(
         # sed -i "/^DELAY /cDELAY = 2" $PARAM
         # sed -i "/^NPROC /cNPROC = 56" $PARAM
         sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/level2_ard/" $PARAM
+        sed -i "/^NPROCE /cNPROC = 2" $PARAM
         sed -i "/^DIR_LOG /cDIR_LOG = /data/level2_log/" $PARAM
         sed -i "/^DIR_TEMP /cDIR_TEMP = /data/level2_tmp/" $PARAM
-        sed -i "/^FILE_DEM /cFILE_DEM = $DEM/global_srtm-aster.vrt" $PARAM
+        sed -i "/^FILE_DEM /cFILE_DEM = $DEM/dem.vrt" $PARAM
         sed -i "/^DIR_WVPLUT /cDIR_WVPLUT = $WVDB" $PARAM
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
         sed -i "/^TILE_SIZE /cTILE_SIZE = $TILESIZE" $PARAM
@@ -224,7 +226,7 @@ with DAG(
             env_vars={
                 'GLOBAL_PARAM': '/data/param_files/ard.prm',
                 'PARAM':f"/data/param_files/ard_0{index}.prm",
-                'QUEUE_FILE': f"/data/queue_0{index}.txt",
+                'QUEUE_FILE': f"/data/queue_files/queue_0{index}.txt",
                 },
             get_logs=True,
             dag=dag
