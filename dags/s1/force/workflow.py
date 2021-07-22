@@ -78,42 +78,42 @@ with DAG(
         concurrency=10
 ) as dag:
 
-    # # Downloads auxiliary data
-    # download_auxiliary = KubernetesPodOperator(
-        # name='download_auxiliary',
-        # namespace=namespace,
-        # task_id='download_auxiliary',
-        # image='bash',
-        # cmds=["/bin/sh","-c"],
-        # arguments=[f'wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}'],
-        # resources=compute_resources,
-        # volumes=[volume],
-        # security_context=security_context,
-        # volume_mounts=[volume_mount],
-        # get_logs=True,
-        # dag=dag
-        # )
+    # Downloads auxiliary data
+    download_auxiliary = KubernetesPodOperator(
+        name='download_auxiliary',
+        namespace=namespace,
+        task_id='download_auxiliary',
+        image='bash',
+        cmds=["/bin/sh","-c"],
+        arguments=[f'wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/eb61444bd97f4c738038/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}'],
+        resources=compute_resources,
+        volumes=[volume],
+        security_context=security_context,
+        volume_mounts=[volume_mount],
+        get_logs=True,
+        dag=dag
+        )
 
     
-    # # Downloads level 1 data
-    # download_level_1 = KubernetesPodOperator(
-        # name='download_level_1',
-        # namespace=namespace,
-        # image='davidfrantz/force',
-        # task_id='download_level_1',
-        # cmds=["/bin/sh","-c"],
-        # arguments=[
-            # f'mkdir -p {image_metadata_folderpath} && \
-              # force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
-              # mkdir -p {image_folderpath} && \
-              # force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}'],
-        # resources=compute_resources,
-        # volumes=[volume],
-        # volume_mounts=[volume_mount],
-        # security_context=security_context,
-        # get_logs=True,
-        # dag=dag
-        # )
+    # Downloads level 1 data
+    download_level_1 = KubernetesPodOperator(
+        name='download_level_1',
+        namespace=namespace,
+        image='davidfrantz/force',
+        task_id='download_level_1',
+        cmds=["/bin/sh","-c"],
+        arguments=[
+            f'mkdir -p {image_metadata_folderpath} && \
+            force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
+              mkdir -p {image_folderpath} && \
+              force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}'],
+        resources=compute_resources,
+        volumes=[volume],
+        volume_mounts=[volume_mount],
+        security_context=security_context,
+        get_logs=True,
+        dag=dag
+        )
 
     generate_allowed_tiles = KubernetesPodOperator(
         name='generate_allowed_tiles',
