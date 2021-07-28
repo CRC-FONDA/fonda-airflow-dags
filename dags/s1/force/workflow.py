@@ -38,10 +38,10 @@ mask_resolution = 30
 namespace = "default"
 
 compute_resources = {
-    'request_cpu': '500m',
-    'request_memory': '512Mi',
-    'limit_cpu': '500m',
-    'limit_memory': '2Gi'
+    'request_cpu': '1000m',
+    'request_memory': '3Gi',
+    'limit_cpu': '2000m',
+    'limit_memory': '4Gi'
 }
 
 volume = k8s.V1Volume(
@@ -115,7 +115,7 @@ with DAG(
     download_level_1 = KubernetesPodOperator(
         name='download_level_1',
         namespace=namespace,
-        image='davidfrantz/force',
+        image='davidfrantz/force:3.6.5',
         task_id='download_level_1',
         cmds=["/bin/sh","-c"],
         arguments=[
@@ -134,7 +134,7 @@ with DAG(
     generate_allowed_tiles = KubernetesPodOperator(
         name='generate_allowed_tiles',
         namespace=namespace,
-        image='davidfrantz/force',
+        image='davidfrantz/force:3.6.5',
         task_id='generate_allowed_tiles',
         cmds=["/bin/sh","-c"],
         arguments=[f'force-tile-extent {aoi_filepath} {datacube_folderpath} {allowed_tiles_filepath}'],
@@ -149,7 +149,7 @@ with DAG(
     generate_analysis_mask = KubernetesPodOperator(
         name='generate_analysis_mask',
         namespace=namespace,
-        image='davidfrantz/force',
+        image='davidfrantz/force:3.6.5',
         task_id='generate_analysis_mask',
         cmds=["/bin/sh","-c"],
         arguments=[f'mkdir -p {masks_folderpath} && cp {datacube_folderpath}/datacube-definition.prj {masks_folderpath} && force-cube {aoi_filepath} {masks_folderpath} rasterize {mask_resolution}'],
@@ -164,7 +164,7 @@ with DAG(
     prepare_level2 = KubernetesPodOperator(
         name='prepare_level2',
         namespace=namespace,
-        image='davidfrantz/force',
+        image='davidfrantz/force:3.6.5',
         task_id='prepare_level2',
         cmds=["/bin/sh","-c"],
         arguments=[f"""mkdir -p /data/queue_files
@@ -197,7 +197,7 @@ with DAG(
         sed -i "/^ORIGIN_LON /cORIGIN_LON = $ORIGINX" $PARAM
         sed -i "/^ORIGIN_LAT /cORIGIN_LAT = $ORIGINY" $PARAM
         sed -i "/^PROJECTION /cPROJECTION = $CRS" $PARAM
-        sed -i "/^NTHREAD /cNTHREAD = 2" $PARAM
+        sed -i "/^NTHREAD /cNTHREAD = 1" $PARAM
             """],
         security_context=security_context,
         resources=compute_resources,
@@ -222,7 +222,7 @@ with DAG(
         preprocess_level2_task = KubernetesPodOperator(
             name='preprocess_level2_' + index,
             namespace=namespace,
-            image='davidfrantz/force',
+            image='davidfrantz/force:3.6.5',
             task_id='preprocess_level2_' + index,
             cmds=["/bin/sh","-c"],
             arguments=["""\
@@ -251,7 +251,7 @@ with DAG(
     # process_tsa=KubernetesPodOperator(
         # name='process_tsa',
         # namespace=namespace,
-        # image='davidfrantz/force',
+        # image='davidfrantz/force:3.6.5',
         # task_id='process_tsa',
         # cmds=["/bin/sh","-c"],
         # arguments=["""\
