@@ -2,8 +2,10 @@ from datetime import timedelta
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from airflow.utils.dates import days_ago
+from airflow.operators.python import BranchPythonOperator
 from kubernetes.client import models as k8s
 from airflow.operators.dummy_operator import DummyOperator
+from airflow.utils.trigger_rule import TriggerRule
 
 # Working environment variables
 MOUNT_DATA_PATH = '/data'
@@ -26,6 +28,8 @@ wvdb = MOUNT_DATA_PATH + '/input/wvdb'
 masks_folderpath = MOUNT_DATA_PATH + '/masks'
 endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
 queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
+parallel_factor = 20
+download = False
 
 mask_resolution = 30
 
@@ -77,6 +81,18 @@ with DAG(
         max_active_runs=1,
         concurrency=10
 ) as dag:
+
+    def will_download():
+        if download == True:
+            return start_downloads.task_id
+        else:
+            return skip_downloads.task_id
+
+    # Decides if we'll do the downloading tasks or not
+    branch_downloads = BranchPythonOperator(
+            task_id='branch_downloads',
+            python_callable=will_download
+            )
 
     # Downloads auxiliary data
     download_auxiliary = KubernetesPodOperator(
@@ -152,7 +168,7 @@ with DAG(
         task_id='prepare_level2',
         cmds=["/bin/sh","-c"],
         arguments=[f"""mkdir -p /data/queue_files
-        split -l$((`wc -l < /data/queue.txt`/10)) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
+        split -l$((`wc -l < /data/queue.txt`/{parallel_factor})) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/param_files
         mkdir -p /data/level2_ard
         mkdir -p /data/level2_log
@@ -201,8 +217,8 @@ with DAG(
         )
 
     preprocess_level2_tasks = []
-    for i in range(10):
-        index = str(i)
+    for i in range(parallel_factor):
+        index = f'{i:02d}'
         preprocess_level2_task = KubernetesPodOperator(
             name='preprocess_level2_' + index,
             namespace=namespace,
@@ -224,8 +240,8 @@ with DAG(
             volume_mounts=[volume_mount],
             env_vars={
                 'GLOBAL_PARAM': '/data/param_files/ard.prm',
-                'PARAM':f"/data/param_files/ard_0{index}.prm",
-                'QUEUE_FILE': f"/data/queue_files/queue_0{index}.txt",
+                'PARAM':f"/data/param_files/ard_{index}.prm",
+                'QUEUE_FILE': f"/data/queue_files/queue_{index}.txt",
                 },
             get_logs=True,
             dag=dag
@@ -311,20 +327,22 @@ with DAG(
         # )
 
     dag_start = DummyOperator(task_id='Start', dag=dag)
+    start_downloads = DummyOperator(task_id='start_downloads', dag=dag)
+    skip_downloads = DummyOperator(task_id='skip_downloads', dag=dag)
     wait_for_downloads = DummyOperator(task_id='wait_for_downloads', dag=dag)
+    downloads_completed = DummyOperator(task_id='downloads_completed', dag=dag, trigger_rule=TriggerRule.ONE_SUCCESS)
     
-    # dag_start >> download_auxiliary >> download_level_1 >> wait_for_downloads >> generate_allowed_tiles >> generate_analysis_mask >> preprocess_level2
+    branch_downloads.set_upstream(dag_start)
+    branch_downloads >> [start_downloads, skip_downloads]
 
-    # TODO: Make a separate download dag with common environment variables
-
-    
-
-    download_level_1.set_upstream(dag_start)
-    download_auxiliary.set_upstream(dag_start)
+    download_level_1.set_upstream(start_downloads)
+    download_auxiliary.set_upstream(start_downloads)
     wait_for_downloads.set_upstream(download_level_1)
     wait_for_downloads.set_upstream(download_auxiliary)
-    generate_allowed_tiles.set_upstream(wait_for_downloads)
-    generate_analysis_mask.set_upstream(wait_for_downloads)
+    downloads_completed.set_upstream(wait_for_downloads)
+    downloads_completed.set_upstream(skip_downloads)
+    generate_allowed_tiles.set_upstream(downloads_completed)
+    generate_analysis_mask.set_upstream(downloads_completed)
     prepare_level2.set_upstream(generate_allowed_tiles)
     prepare_level2.set_upstream(generate_analysis_mask)
     for task in preprocess_level2_tasks:
