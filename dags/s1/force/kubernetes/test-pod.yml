@@ -7,6 +7,9 @@ spec:
   - name: test
     image: davidfrantz/force
     command: ["sleep", "1000000"]
+    securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 0
     volumeMounts:
     - name: force-pv
       mountPath: /data
