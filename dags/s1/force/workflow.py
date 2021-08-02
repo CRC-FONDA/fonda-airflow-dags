@@ -28,7 +28,7 @@ wvdb = MOUNT_DATA_PATH + '/input/wvdb'
 masks_folderpath = MOUNT_DATA_PATH + '/masks'
 endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
 queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
-parallel_factor = 20
+parallel_factor = 245
 download = False
 
 mask_resolution = 30
@@ -168,7 +168,7 @@ with DAG(
         task_id='prepare_level2',
         cmds=["/bin/sh","-c"],
         arguments=[f"""mkdir -p /data/queue_files
-        split -l$((`wc -l < /data/queue.txt`/{parallel_factor})) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
+        split -a 3 -l$((`wc -l < /data/queue.txt`/{parallel_factor})) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/param_files
         mkdir -p /data/level2_ard
         mkdir -p /data/level2_log
@@ -184,7 +184,7 @@ with DAG(
         # set parameters
         # sed -i "/^PARALLEL_READS /cPARALLEL_READS = TRUE" $PARAM
         # sed -i "/^DELAY /cDELAY = 2" $PARAM
-        # sed -i "/^NPROC /cNPROC = 56" $PARAM
+        sed -i "/^NPROC /cNPROC = 1" $PARAM
         sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/level2_ard/" $PARAM
         sed -i "/^NPROCE /cNPROC = 2" $PARAM
         sed -i "/^DIR_LOG /cDIR_LOG = /data/level2_log/" $PARAM
@@ -197,7 +197,7 @@ with DAG(
         sed -i "/^ORIGIN_LON /cORIGIN_LON = $ORIGINX" $PARAM
         sed -i "/^ORIGIN_LAT /cORIGIN_LAT = $ORIGINY" $PARAM
         sed -i "/^PROJECTION /cPROJECTION = $CRS" $PARAM
-        sed -i "/^NTHREAD /cNTHREAD = 1" $PARAM
+        sed -i "/^NTHREAD /cNTHREAD = 2" $PARAM
             """],
         security_context=security_context,
         resources=compute_resources,
@@ -218,7 +218,7 @@ with DAG(
 
     preprocess_level2_tasks = []
     for i in range(parallel_factor):
-        index = f'{i:02d}'
+        index = f'{i:03d}'
         preprocess_level2_task = KubernetesPodOperator(
             name='preprocess_level2_' + index,
             namespace=namespace,
