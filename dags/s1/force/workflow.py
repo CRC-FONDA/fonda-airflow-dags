@@ -15,7 +15,7 @@ MOUNT_DATA_PATH = '/data'
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
 start_date = "20060101"
-end_date = "20080101"
+end_date = "20120101"
 daterange = start_date + ',' + end_date
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
@@ -245,9 +245,11 @@ with DAG(
                 },
             get_logs=True,
             dag=dag
+            retries=5,
+            retry_delay=timedelta(minutes=10)
             )
         preprocess_level2_tasks.append(preprocess_level2_task)
-
+        
     # process_tsa=KubernetesPodOperator(
         # name='process_tsa',
         # namespace=namespace,
