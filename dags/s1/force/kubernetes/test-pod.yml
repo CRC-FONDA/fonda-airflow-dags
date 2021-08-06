@@ -13,10 +13,16 @@ spec:
     volumeMounts:
     - name: force-pv
       mountPath: /data
+    - name: test-volume
+      mountPath: /host-local
   restartPolicy: Never
   volumes:
   - name: force-pv
     persistentVolumeClaim:
       claimName: force-pvc
+  - name: test-volume
+    hostPath:
+      path: /data
+      type: Directory
 
 
