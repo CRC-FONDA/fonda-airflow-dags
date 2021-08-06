@@ -31,6 +31,7 @@ queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
 parallel_factor = 245
 ard_folderpath = MOUNT_DATA_PATH + '/level2_ard'
 trend_folderpath = MOUNT_DATA_PATH + '/trends'
+num_of_tiles = 28
 download = False
 
 mask_resolution = 30
@@ -261,12 +262,7 @@ with DAG(
         arguments=["""\
         force-parameter . TSA 0
         mv LEVEL2-skeleton.prm $PARAM
-
-        # processing extent
-        XMIN=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 1 | sort | head -n 1)
-        XMAX=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 1 | sort | tail -n 1)
-        YMIN=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 2 | sort | head -n 1)
-        YMAX=$(sed '1d' $TILE | sed 's/[XY]//g' | cut -d '_' -f 2 | sort | tail -n 1)
+        mkdir -p $TRENDS_FOLDER
 
         # paths
         sed -i "/^DIR_LOWER /cDIR_LOWER = $ARD_FOLDER" $PARAM
@@ -277,13 +273,11 @@ with DAG(
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
 
         # threading
-        sed -i "/^NTHREAD_READ /cNTHREAD_READ = 4" $PARAM
-        sed -i "/^NTHREAD_COMPUTE /cNTHREAD_COMPUTE = 104" $PARAM
-        sed -i "/^NTHREAD_WRITE /cNTHREAD_WRITE = 4" $PARAM
+        sed -i "/^NTHREAD_READ /cNTHREAD_READ = 1" $PARAM
+        sed -i "/^NTHREAD_COMPUTE /cNTHREAD_COMPUTE = 2" $PARAM
+        sed -i "/^NTHREAD_WRITE /cNTHREAD_WRITE = 1" $PARAM
 
-        # extent and resolution
-        sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $XMIN $XMAX" $PARAM
-        sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $YMIN $YMAX" $PARAM
+        # resolution
         sed -i "/^RESOLUTION /cRESOLUTION = 30" $PARAM
 
         # sensors
@@ -304,6 +298,8 @@ with DAG(
         sed -i "/^OUTPUT_POL /cOUTPUT_POL = TRUE" $PARAM
         sed -i "/^OUTPUT_TRO /cOUTPUT_TRO = TRUE" $PARAM
         sed -i "/^OUTPUT_CAO /cOUTPUT_CAO = TRUE" $PARAM
+        
+        cp $PARAM /data/param_files/
 
         echo "DONE"
             """],
@@ -332,6 +328,43 @@ with DAG(
         dag=dag
         )
 
+    tsa_tasks = []
+    for i in range(2, num_of_tiles + 2):
+        index = f'{i:03d}'
+        tsa_task = KubernetesPodOperator(
+              name='tsa_task_' + index,
+              namespace=namespace,
+              image='davidfrantz/force:3.6.5',
+              task_id='tsa_task_' + index,
+              cmds=["/bin/sh","-c"],
+              arguments=[f"""\
+              echo "STARTING TIME SERIES ANALYSIS"
+              cp $GLOBAL_PARAM $PARAM
+              # Get the corresponding line from the allowed tiles file
+              TILE=sed '{index}q;d $TILE_FILE 
+              X=${{TILE:1:4}}
+              Y=${{TILE:7:11}}
+              sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $XMIN $XMAX" $PARAM
+              sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $YMIN $YMAX" $PARAM
+              date
+              force-higher-level $PARAM
+              echo "DONE"
+              date
+                  """],
+              security_context=security_context,
+              resources=compute_resources,
+              volumes=[volume],
+              volume_mounts=[volume_mount],
+              env_vars={
+                  'GLOBAL_PARAM': '/data/param_files/tsa.prm',
+                  'PARAM':f"/data/param_files/tsa_{index}.prm",
+                  },
+              get_logs=True,
+              dag=dag,
+              )
+        tsa_tasks.append(tsa_task)
+
+
     dag_start = DummyOperator(task_id='Start', dag=dag)
     start_downloads = DummyOperator(task_id='start_downloads', dag=dag)
     skip_downloads = DummyOperator(task_id='skip_downloads', dag=dag)
@@ -354,3 +387,6 @@ with DAG(
     for task in preprocess_level2_tasks:
         task.set_upstream(prepare_level2)
         task.set_downstream(prepare_tsa)
+
+    for task in tsa_tasks:
+        task.set_upstream(prepare_tsa)
