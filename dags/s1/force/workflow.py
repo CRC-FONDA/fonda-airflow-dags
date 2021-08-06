@@ -1,4 +1,4 @@
-from datetime import timedelta
+from datetime import timedelta, date
 from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from airflow.utils.dates import days_ago
@@ -14,9 +14,9 @@ MOUNT_DATA_PATH = '/data'
 # What sensors we're getting the lvl1 data from
 sensors_level1 = 'LT04,LT05,LE07,S2A'
 
-start_date = "20060101"
-end_date = "20120101"
-daterange = start_date + ',' + end_date
+start_date = date(2006, 1, 1)
+end_date = date(2012, 1, 1)
+daterange = start_date.strftime("%Y%m%d") + ',' + end_date.strftime("%Y%m%d")
 aoi_filepath = MOUNT_DATA_PATH + '/input/vector/aoi.gpkg'
 datacube_folderpath = MOUNT_DATA_PATH + '/input/grid'
 datacube_filepath = datacube_folderpath + '/' + 'datacube-definition.prj'
