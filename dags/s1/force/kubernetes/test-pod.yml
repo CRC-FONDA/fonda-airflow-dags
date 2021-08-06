@@ -5,7 +5,7 @@ metadata:
 spec:
   containers:
   - name: test
-    image: davidfrantz/force
+    image: davidfrantz/force:3.6.5
     command: ["sleep", "1000000"]
     securityContext:
         allowPrivilegeEscalation: false
