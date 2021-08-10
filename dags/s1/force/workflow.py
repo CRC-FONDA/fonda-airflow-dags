@@ -254,21 +254,20 @@ with DAG(
         preprocess_level2_tasks.append(preprocess_level2_task)
         
     prepare_tsa=KubernetesPodOperator(
-        name='prepapre_tsa',
+        name='prepape_tsa',
         namespace=namespace,
         image='davidfrantz/force:3.6.5',
         task_id='prepare_tsa',
         cmds=["/bin/sh","-c"],
         arguments=["""\
         force-parameter . TSA 0
-        mv LEVEL2-skeleton.prm $PARAM
+        mv TSA-skeleton.prm $PARAM
         mkdir -p $TRENDS_FOLDER
 
         # paths
         sed -i "/^DIR_LOWER /cDIR_LOWER = $ARD_FOLDER" $PARAM
-        sed -i "/^DIR_HIGHER /cDIR_HIGHER = $TREND_FOLDER" $PARAM
+        sed -i "/^DIR_HIGHER /cDIR_HIGHER = $TRENDS_FOLDER" $PARAM
         sed -i "/^DIR_MASK /cDIR_MASK = $MASKS_FOLDER" $PARAM
-        sed -i "/^BASE_MASK /cBASE_MASK = $AOI_PATH" $PARAM
         sed -i "/^FILE_ENDMEM /cFILE_ENDMEM = $ENDMEMBER" $PARAM
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
 
@@ -318,7 +317,7 @@ with DAG(
             'PARAM':"tsa.prm",
             'ENDMEMBER': endmember_filepath,
             'ARD_FOLDER': ard_folderpath,
-            'TREND_FOLDER': trend_folderpath,
+            'TRENDS_FOLDER': trend_folderpath,
             'MASKS_FOLDER': masks_folderpath,
             'AOI_PATH': aoi_filepath,
             'START_DATE': start_date.isoformat(),
@@ -336,16 +335,17 @@ with DAG(
               namespace=namespace,
               image='davidfrantz/force:3.6.5',
               task_id='tsa_task_' + index,
-              cmds=["/bin/sh","-c"],
+              cmds=["/bin/bash","-c"],
               arguments=[f"""\
               echo "STARTING TIME SERIES ANALYSIS"
               cp $GLOBAL_PARAM $PARAM
               # Get the corresponding line from the allowed tiles file
-              TILE=sed '{index}q;d $TILE_FILE 
+              TILE=`sed '{index}q;d' $TILE_FILE` 
               X=${{TILE:1:4}}
               Y=${{TILE:7:11}}
-              sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $XMIN $XMAX" $PARAM
-              sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $YMIN $YMAX" $PARAM
+              sed -i "/^BASE_MASK /cBASE_MASK = aoi.tif" $PARAM
+              sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $X $X" $PARAM
+              sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $Y $Y" $PARAM
               date
               force-higher-level $PARAM
               echo "DONE"
@@ -358,6 +358,7 @@ with DAG(
               env_vars={
                   'GLOBAL_PARAM': '/data/param_files/tsa.prm',
                   'PARAM':f"/data/param_files/tsa_{index}.prm",
+                  'TILE_FILE': allowed_tiles_filepath,
                   },
               get_logs=True,
               dag=dag,
