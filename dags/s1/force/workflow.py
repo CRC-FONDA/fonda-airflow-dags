@@ -346,15 +346,27 @@ with DAG(
               sed -i "/^BASE_MASK /cBASE_MASK = aoi.tif" $PARAM
               sed -i "/^X_TILE_RANGE /cX_TILE_RANGE = $X $X" $PARAM
               sed -i "/^Y_TILE_RANGE /cY_TILE_RANGE = $Y $Y" $PARAM
-              date
               force-higher-level $PARAM
               echo "DONE"
-              date
+
+              # Push results to xcom
+              mkdir -p /airflow/xcom/
+              
+              # Find *.tif files and store them in a list of files
+              cd /data/trends/$TILE
+              files=`find *.tif | tr '\n' ','`
+              # Add Brackets
+              files='['$files']'
+              # Make json
+              echo '{{"tile":"'$TILE'", "files":"'$files'"}}' 
+              echo '{{"tile":"'$TILE'", "files":"'$files'"}}' > /airflow/xcom/return.json
+
                   """],
               security_context=security_context,
               resources=compute_resources,
               volumes=[volume],
               volume_mounts=[volume_mount],
+              do_xcom_push=True,
               env_vars={
                   'GLOBAL_PARAM': '/data/param_files/tsa.prm',
                   'PARAM':f"/data/param_files/tsa_{index}.prm",
