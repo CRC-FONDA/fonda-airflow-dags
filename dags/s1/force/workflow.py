@@ -28,11 +28,16 @@ wvdb = MOUNT_DATA_PATH + '/input/wvdb'
 masks_folderpath = MOUNT_DATA_PATH + '/masks'
 endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
 queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
-parallel_factor = 245
 ard_folderpath = MOUNT_DATA_PATH + '/level2_ard'
-trend_folderpath = MOUNT_DATA_PATH + '/trends'
+trends_folderpath = MOUNT_DATA_PATH + '/trends'
+
+
 num_of_tiles = 28
+parallel_factor = 245
 download = False
+num_of_filters = 10
+num_of_pyramid_tasks_per_tile = 10
+# You have to assert that the number of pyramods tasks per tile is smaller tyhan the number of the actualfilters
 
 mask_resolution = 30
 
@@ -317,7 +322,7 @@ with DAG(
             'PARAM':"tsa.prm",
             'ENDMEMBER': endmember_filepath,
             'ARD_FOLDER': ard_folderpath,
-            'TRENDS_FOLDER': trend_folderpath,
+            'TRENDS_FOLDER': trends_folderpath,
             'MASKS_FOLDER': masks_folderpath,
             'AOI_PATH': aoi_filepath,
             'START_DATE': start_date.isoformat(),
@@ -377,11 +382,76 @@ with DAG(
               )
         tsa_tasks.append(tsa_task)
 
+    pyramid_tasks_per_tile = []
+    for i in range(2, num_of_tiles + 2):
+        # TODO: pyramids could and should be tried in some form of batches
+        pyramid_tasks_in_tile = []
+        for j in range(num_of_filters):
+        
+            pyramid_task_index = i * num_of_filters + j
+            tile_index = f'{i:03d}'
+            index = f'{pyramid_task_index:03d}'
+            pyramid_task = KubernetesPodOperator(
+                  name='pyramid_task_' + index,
+                  namespace=namespace,
+                  image='davidfrantz/force:3.6.5',
+                  task_id='pyramid_task_' + index,
+                  cmds=["/bin/bash","-c"],
+                  arguments=[f"""\
+                            echo Pyramid task. Index:
+                            echo $INDEX
+                            TILE=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"tile\"] }}}}\"
+                            FILES=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"files\"] }}}}\"
+                            echo $TILE
+                            echo $FILES
+                            echo $FILE_INDEX
+                  """],
+                  security_context=security_context,
+                  resources=compute_resources,
+                  volumes=[volume],
+                  volume_mounts=[volume_mount],
+                  env_vars={
+                      'INDEX': index,
+                      'TRENDS_FOLDERPATH': trends_folderpath,
+                      'FILE_INDEX': str(j)
+                      },
+                  get_logs=True,
+                  dag=dag,
+                  )
+            pyramid_tasks_in_tile.append(pyramid_task)
+        pyramid_tasks_per_tile.append(pyramid_tasks_in_tile)
+
+
+    mosaic_tasks = []
+    for i in range(10):
+        index = f'{i:03d}'
+        mosaic_task = KubernetesPodOperator(
+              name='mosaic_task_' + index,
+              namespace=namespace,
+              image='davidfrantz/force:3.6.5',
+              task_id='mosaic_task_' + index,
+              cmds=["/bin/bash","-c"],
+              arguments=[f"""\
+                      echo Mosaic task. Index:
+                      echo $INDEX
+                  """],
+              security_context=security_context,
+              resources=compute_resources,
+              volumes=[volume],
+              volume_mounts=[volume_mount],
+              env_vars={
+                  'INDEX': index,
+                  },
+              get_logs=True,
+              dag=dag,
+              )
+        mosaic_tasks.append(mosaic_task)
 
     dag_start = DummyOperator(task_id='Start', dag=dag)
     start_downloads = DummyOperator(task_id='start_downloads', dag=dag)
     skip_downloads = DummyOperator(task_id='skip_downloads', dag=dag)
     wait_for_downloads = DummyOperator(task_id='wait_for_downloads', dag=dag)
+    wait_for_trends = DummyOperator(task_id='wait_for_trends', dag=dag)
     downloads_completed = DummyOperator(task_id='downloads_completed', dag=dag, trigger_rule=TriggerRule.ONE_SUCCESS)
     
     branch_downloads.set_upstream(dag_start)
@@ -401,5 +471,12 @@ with DAG(
         task.set_upstream(prepare_level2)
         task.set_downstream(prepare_tsa)
 
-    for task in tsa_tasks:
-        task.set_upstream(prepare_tsa)
+    for tsa_task, zzz in zip(tsa_tasks, pyramid_tasks_per_tile):
+        tsa_task.set_upstream(prepare_tsa)
+        tsa_task.set_downstream(wait_for_trends)
+        # Start pyramid batch of pyramid tasks for every tile.
+        tsa_task.set_downstream(zzz)
+        
+
+    for task in mosaic_tasks:
+        task.set_upstream(wait_for_trends)
