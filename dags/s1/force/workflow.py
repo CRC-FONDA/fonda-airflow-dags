@@ -389,6 +389,7 @@ with DAG(
         for j in range(num_of_filters):
         
             pyramid_task_index = i * num_of_filters + j
+            file_index = str(j + 1)
             tile_index = f'{i:03d}'
             index = f'{pyramid_task_index:03d}'
             pyramid_task = KubernetesPodOperator(
@@ -398,13 +399,14 @@ with DAG(
                   task_id='pyramid_task_' + index,
                   cmds=["/bin/bash","-c"],
                   arguments=[f"""\
-                            echo Pyramid task. Index:
-                            echo $INDEX
                             TILE=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"tile\"] }}}}\"
                             FILES=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"files\"] }}}}\"
                             echo $TILE
                             echo $FILES
                             echo $FILE_INDEX
+                            CHOSEN_FILE=`echo $FILES | sed 's/[][]//g' | cut -d "," -f $FILE_INDEX`
+                            FILES_TO_DO="${{TRENDS_FOLDERPATH}}/${{TILE}}/${{CHOSEN_FILE}}"
+                            force-pyramid $FILES_TO_DO
                   """],
                   security_context=security_context,
                   resources=compute_resources,
@@ -413,7 +415,7 @@ with DAG(
                   env_vars={
                       'INDEX': index,
                       'TRENDS_FOLDERPATH': trends_folderpath,
-                      'FILE_INDEX': str(j)
+                      'FILE_INDEX': file_index,
                       },
                   get_logs=True,
                   dag=dag,
