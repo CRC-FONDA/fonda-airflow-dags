@@ -421,32 +421,6 @@ with DAG(
             pyramid_tasks_in_tile.append(pyramid_task)
         pyramid_tasks_per_tile.append(pyramid_tasks_in_tile)
 
-
-    mosaic_tasks = []
-    for i in range(10):
-        index = f'{i:03d}'
-        mosaic_task = KubernetesPodOperator(
-              name='mosaic_task_' + index,
-              namespace=namespace,
-              image='davidfrantz/force:3.6.5',
-              task_id='mosaic_task_' + index,
-              cmds=["/bin/bash","-c"],
-              arguments=[f"""\
-                      echo Mosaic task. Index:
-                      echo $INDEX
-                  """],
-              security_context=security_context,
-              resources=compute_resources,
-              volumes=[volume],
-              volume_mounts=[volume_mount],
-              env_vars={
-                  'INDEX': index,
-                  },
-              get_logs=True,
-              dag=dag,
-              )
-        mosaic_tasks.append(mosaic_task)
-    
     wait_for_trends = KubernetesPodOperator(
         name='wait_for_trends',
         namespace=namespace,
@@ -456,7 +430,7 @@ with DAG(
         arguments=["""\
             cd $TRENDS_FOLDERPATH
             UNIQUE_BASENAMES=`find . -name '*.tif' -exec basename {} \; | sort | uniq`
-            COUNTER=1
+            COUNTER=0
             for i in $UNIQUE_BASENAMES
             do
               mkdir -p $DATA_FOLDERPATH/$COUNTER
@@ -467,7 +441,7 @@ with DAG(
                 echo $TILE
                 echo $FILE
                 mkdir -p $DATA_FOLDERPATH/$COUNTER$TILE
-                ln -s .$FILE $DATA_FOLDERPATH/$COUNTER$FILE
+                ln .$FILE $DATA_FOLDERPATH/$COUNTER$FILE
               done
               let COUNTER++
             done 
@@ -484,6 +458,32 @@ with DAG(
         get_logs=True,
         dag=dag
         )
+
+    mosaic_tasks = []
+    for i in range(10):
+        index = f'{i:01d}'
+        mosaic_task = KubernetesPodOperator(
+              name='mosaic_task_' + index,
+              namespace=namespace,
+              image='davidfrantz/force:3.6.5',
+              task_id='mosaic_task_' + index,
+              cmds=["/bin/bash","-c"],
+              arguments=[f"""\
+                      force-mosaic $MOSAIC_FOLDERPATH/$INDEX
+                  """],
+              security_context=security_context,
+              resources=compute_resources,
+              volumes=[volume],
+              volume_mounts=[volume_mount],
+              env_vars={
+                  'INDEX': index,
+                  'MOSAIC_FOLDERPATH': mosaic_folderpath,
+                  },
+              get_logs=True,
+              dag=dag,
+              )
+        mosaic_tasks.append(mosaic_task)
+    
 
 
     dag_start = DummyOperator(task_id='Start', dag=dag)
