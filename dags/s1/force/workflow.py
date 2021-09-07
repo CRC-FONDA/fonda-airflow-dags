@@ -30,6 +30,7 @@ endmember_filepath = MOUNT_DATA_PATH + '/input/endmember/hostert-2003.txt'
 queue_filepath = MOUNT_DATA_PATH + '/queue.txt'
 ard_folderpath = MOUNT_DATA_PATH + '/level2_ard'
 trends_folderpath = MOUNT_DATA_PATH + '/trends'
+mosaic_folderpath = MOUNT_DATA_PATH + '/mosaic'
 
 
 num_of_tiles = 28
@@ -401,9 +402,6 @@ with DAG(
                   arguments=[f"""\
                             TILE=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"tile\"] }}}}\"
                             FILES=\"{{{{ task_instance.xcom_pull('tsa_task_{tile_index}')[\"files\"] }}}}\"
-                            echo $TILE
-                            echo $FILES
-                            echo $FILE_INDEX
                             CHOSEN_FILE=`echo $FILES | sed 's/[][]//g' | cut -d "," -f $FILE_INDEX`
                             FILES_TO_DO="${{TRENDS_FOLDERPATH}}/${{TILE}}/${{CHOSEN_FILE}}"
                             force-pyramid $FILES_TO_DO
@@ -448,12 +446,50 @@ with DAG(
               dag=dag,
               )
         mosaic_tasks.append(mosaic_task)
+    
+    wait_for_trends = KubernetesPodOperator(
+        name='wait_for_trends',
+        namespace=namespace,
+        image='davidfrantz/force:3.6.5',
+        task_id='wait_for_trends',
+        cmds=["/bin/bash","-c"],
+        arguments=["""\
+            cd $TRENDS_FOLDERPATH
+            UNIQUE_BASENAMES=`find . -name '*.tif' -exec basename {} \; | sort | uniq`
+            COUNTER=1
+            for i in $UNIQUE_BASENAMES
+            do
+              mkdir -p $DATA_FOLDERPATH/$COUNTER
+              FILES_TO_MOVE=`find . -name $i | cut -c 2-`
+              for FILE in $FILES_TO_MOVE
+              do
+                TILE=`dirname $FILE`
+                echo $TILE
+                echo $FILE
+                mkdir -p $DATA_FOLDERPATH/$COUNTER$TILE
+                ln -s .$FILE $DATA_FOLDERPATH/$COUNTER$FILE
+              done
+              let COUNTER++
+            done 
+            """],
+        security_context=security_context,
+        resources=compute_resources,
+        volumes=[volume],
+        volume_mounts=[volume_mount],
+        env_vars={
+                'TRENDS_FOLDERPATH': trends_folderpath,
+                'DATA_FOLDERPATH': mosaic_folderpath,
+
+            },
+        get_logs=True,
+        dag=dag
+        )
+
 
     dag_start = DummyOperator(task_id='Start', dag=dag)
     start_downloads = DummyOperator(task_id='start_downloads', dag=dag)
     skip_downloads = DummyOperator(task_id='skip_downloads', dag=dag)
     wait_for_downloads = DummyOperator(task_id='wait_for_downloads', dag=dag)
-    wait_for_trends = DummyOperator(task_id='wait_for_trends', dag=dag)
     downloads_completed = DummyOperator(task_id='downloads_completed', dag=dag, trigger_rule=TriggerRule.ONE_SUCCESS)
     
     branch_downloads.set_upstream(dag_start)
