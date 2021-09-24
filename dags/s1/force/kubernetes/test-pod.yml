@@ -5,15 +5,24 @@ metadata:
 spec:
   containers:
   - name: test
-    image: davidfrantz/force
+    image: davidfrantz/force:3.6.5
     command: ["sleep", "1000000"]
+    securityContext:
+        allowPrivilegeEscalation: false
+        runAsUser: 0
     volumeMounts:
     - name: force-pv
       mountPath: /data
+    - name: test-volume
+      mountPath: /host-local
   restartPolicy: Never
   volumes:
   - name: force-pv
     persistentVolumeClaim:
       claimName: force-pvc
+  - name: test-volume
+    hostPath:
+      path: /data
+      type: Directory
 
 
