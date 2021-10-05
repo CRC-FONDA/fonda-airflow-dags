@@ -11,13 +11,6 @@ from airflow.utils.trigger_rule import TriggerRule
 
 # Working environment variables
 MOUNT_DATA_PATH = "/data"
-
-# HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
-# What sensors we're getting the lvl1 data from
-sensors_level1 = "LT04,LT05,LE07,S2A"
-
-start_date = date(2006, 1, 1)
-end_date = date(2012, 1, 1)
 daterange = start_date.strftime("%Y%m%d") + "," + end_date.strftime("%Y%m%d")
 aoi_filepath = MOUNT_DATA_PATH + "/input/vector/aoi.gpkg"
 datacube_folderpath = MOUNT_DATA_PATH + "/input/grid"
@@ -34,16 +27,21 @@ ard_folderpath = MOUNT_DATA_PATH + "/level2_ard"
 trends_folderpath = MOUNT_DATA_PATH + "/trends"
 mosaic_folderpath = MOUNT_DATA_PATH + "/mosaic"
 
+# HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
+# What sensors we're getting the lvl1 data from
+sensors_level1 = "LT04,LT05,LE07,S2A"
+start_date = date(2006, 1, 1)
+end_date = date(2012, 1, 1)
+mask_resolution = 30
 
 num_of_tiles = 28
-parallel_factor = 245
+parallel_factor = (
+    245  # Parallel factor is practically how many images are to be processed
+)
 download = False
 num_of_filters = 10
 num_of_pyramid_tasks_per_tile = 10
-# You have to assert that the number of pyramods tasks per tile is smaller tyhan the number of the actualfilters
-
-mask_resolution = 30
-
+# You have to assert that the number of pyramids tasks per tile is smaller tyhan the number of the actual filters
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
@@ -69,7 +67,6 @@ volume_mount = k8s.V1VolumeMount(
 security_context = k8s.V1SecurityContext(run_as_user=0)
 
 # DAG
-
 default_args = {
     "owner": "FONDA S1",
     "depends_on_past": False,
@@ -79,7 +76,6 @@ default_args = {
     "retries": 0,
     "retry_delay": timedelta(minutes=100),
 }
-
 
 with DAG(
     "force",
