@@ -535,4 +535,3 @@ with DAG(
 
     for task in mosaic_tasks:
         task.set_upstream(wait_for_trends)
-        task.set_upstream(wait_for_trends)
