@@ -1,13 +1,14 @@
-from datetime import timedelta, date
+from datetime import date, timedelta
+
 from airflow import DAG
+from airflow.operators.dummy_operator import DummyOperator
+from airflow.operators.python import BranchPythonOperator
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
     KubernetesPodOperator,
 )
 from airflow.utils.dates import days_ago
-from airflow.operators.python import BranchPythonOperator
-from kubernetes.client import models as k8s
-from airflow.operators.dummy_operator import DummyOperator
 from airflow.utils.trigger_rule import TriggerRule
+from kubernetes.client import models as k8s
 
 # Working environment variables
 MOUNT_DATA_PATH = "/data"
