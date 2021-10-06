@@ -89,7 +89,7 @@ with DAG(
 ) as dag:
 
     def will_download(*op_args):
-        download_run_parameter = op_args[1]
+        download_run_parameter = op_args[0]
         if download_run_parameter == "True":
             download = True
 
