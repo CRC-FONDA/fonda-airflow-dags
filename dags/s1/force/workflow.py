@@ -3,9 +3,8 @@ from datetime import date, timedelta
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
 from airflow.operators.python import BranchPythonOperator
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
-    KubernetesPodOperator,
-)
+from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import \
+    KubernetesPodOperator
 from airflow.utils.dates import days_ago
 from airflow.utils.trigger_rule import TriggerRule
 from kubernetes.client import models as k8s
@@ -89,7 +88,11 @@ with DAG(
     concurrency=10,
 ) as dag:
 
-    def will_download():
+    def will_download(*op_args):
+        download_run_parameter = op_args[1]
+        if download_run_parameter == "True":
+            download = True
+
         if download == True:
             return start_downloads.task_id
         else:
@@ -97,7 +100,9 @@ with DAG(
 
     # Decides if we'll do the downloading tasks or not
     branch_downloads = BranchPythonOperator(
-        task_id="branch_downloads", python_callable=will_download
+        task_id="branch_downloads",
+        python_callable=will_download,
+        op_args=["{{ dag_run.conf['download'] }}"],
     )
 
     # Downloads auxiliary data
