@@ -133,8 +133,13 @@ with DAG(
         arguments=[
             f"mkdir -p {image_metadata_folderpath} && \
             force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
-              mkdir -p {image_folderpath} && \
-              force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}"
+            sed -i -e 's=^mozilla/DST_Root_CA_X3.crt=!mozilla/DST_ROOT_CA_X3.crt=' /etc/ca-certificates.conf && \
+            cd /usr/local/share/ca-certificates && \
+            wget https://letsencrypt.org/certs/isrgrootx1.pem && \
+            wget https://letsencrypt.org/certs/isrg-root-x2.pem && \
+            update-ca-certificates --fresh && \
+            mkdir -p {image_folderpath} && \
+            force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}"
         ],
         resources=compute_resources,
         volumes=[volume],
