@@ -50,7 +50,7 @@ compute_resources = {
     "request_cpu": "1000m",
     "request_memory": "3Gi",
     "limit_cpu": "2000m",
-    "limit_memory": "5",
+    "limit_memory": "5Gi",
 }
 
 volume = k8s.V1Volume(
