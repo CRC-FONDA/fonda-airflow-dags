@@ -28,9 +28,9 @@ mosaic_folderpath = MOUNT_DATA_PATH + "/mosaic"
 
 # HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
 # What sensors we're getting the lvl1 data from
-sensors_level1 = "LT04,LT05,LE07,S2A"
-start_date = date(2006, 1, 1)
-end_date = date(2012, 1, 1)
+sensors_level1 = "LT04,LT05,LE07"
+start_date = date(1984, 1, 1)
+end_date = date(2006, 12, 31)
 daterange = start_date.strftime("%Y%m%d") + "," + end_date.strftime("%Y%m%d")
 mask_resolution = 30
 
@@ -50,7 +50,7 @@ compute_resources = {
     "request_cpu": "1000m",
     "request_memory": "3Gi",
     "limit_cpu": "2000m",
-    "limit_memory": "4Gi",
+    "limit_memory": "5",
 }
 
 volume = k8s.V1Volume(
