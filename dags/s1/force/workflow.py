@@ -113,7 +113,7 @@ with DAG(
         image="bash",
         cmds=["/bin/sh", "-c"],
         arguments=[
-            f"wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/d01a794f717144a1a648/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}"
+            f"wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/c4d90fc5b07c4955b979/ && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}"
         ],
         resources=compute_resources,
         volumes=[volume],
