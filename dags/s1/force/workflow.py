@@ -44,7 +44,7 @@ num_of_pyramid_tasks_per_tile = 10
 # You have to assert that the number of pyramids tasks per tile is smaller tyhan the number of the actual filters
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
-namespace = "airflow"
+namespace = "default"
 
 compute_resources = {
     "request_cpu": "1000m",
