@@ -249,3 +249,9 @@ dmypy.json
 .prof
 
 # End of https://www.toptal.com/developers/gitignore/api/pycharm,python
+
+# tests 
+tests/
+
+# local kubernetes config
+kubeconfig.yml
