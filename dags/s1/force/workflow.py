@@ -2,46 +2,44 @@ from datetime import date, timedelta
 
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.operators.python import BranchPythonOperator
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import \
     KubernetesPodOperator
 from airflow.utils.dates import days_ago
-from airflow.utils.trigger_rule import TriggerRule
 from kubernetes.client import models as k8s
 
-# Working environment variables
-MOUNT_DATA_PATH = "/data"
-aoi_filepath = MOUNT_DATA_PATH + "/input/vector/aoi.gpkg"
-datacube_folderpath = MOUNT_DATA_PATH + "/input/grid"
-datacube_filepath = datacube_folderpath + "/" + "datacube-definition.prj"
-image_folderpath = MOUNT_DATA_PATH + "/image_data"
-image_metadata_folderpath = MOUNT_DATA_PATH + "/image_metadata"
-allowed_tiles_filepath = MOUNT_DATA_PATH + "/allowed_tiles.txt"
-dem_folderpath = MOUNT_DATA_PATH + "/input/dem"
-wvdb = MOUNT_DATA_PATH + "/input/wvdb"
-masks_folderpath = MOUNT_DATA_PATH + "/masks"
-endmember_filepath = MOUNT_DATA_PATH + "/input/endmember/hostert-2003.txt"
-queue_filepath = MOUNT_DATA_PATH + "/queue.txt"
-ard_folderpath = MOUNT_DATA_PATH + "/level2_ard"
-trends_folderpath = MOUNT_DATA_PATH + "/trends"
-mosaic_folderpath = MOUNT_DATA_PATH + "/mosaic"
+# Input data paths
+INPUT_DATA_PATH = "/data/inputs/b5/eo-01"
+aoi_filepath = INPUT_DATA_PATH + "/vector/aoi.gpkg"
+datacube_folderpath = INPUT_DATA_PATH + "/grid"
+datacube_filepath = datacube_folderpath + "/datacube-definition.prj"
+image_folderpath = INPUT_DATA_PATH + "/image_data"
+dem_folderpath = INPUT_DATA_PATH + "/dem"
+wvdb = INPUT_DATA_PATH + "/wvdb"
+endmember_filepath = INPUT_DATA_PATH + "/endmember/hostert-2003.txt"
 
-# HYPERPARAMETERS AND RUN SPECIFIC PARAMETERS
-# What sensors we're getting the lvl1 data from
+# Output data paths
+OUTPUTS_DATA_PATH = "/data/outputs"
+allowed_tiles_filepath = OUTPUTS_DATA_PATH + "/allowed_tiles.txt"
+masks_folderpath = OUTPUTS_DATA_PATH + "/masks"
+queue_filepath = OUTPUTS_DATA_PATH + "/queue.txt"
+ard_folderpath = OUTPUTS_DATA_PATH + "/level2_ard"
+trends_folderpath = OUTPUTS_DATA_PATH + "/trends"
+mosaic_folderpath = OUTPUTS_DATA_PATH + "/mosaic"
+
+# Query parameters
 sensors_level1 = "LT04,LT05,LE07,S2A"
 start_date = date(1984, 1, 1)
 end_date = date(2006, 12, 31)
 daterange = start_date.strftime("%Y%m%d") + "," + end_date.strftime("%Y%m%d")
 mask_resolution = 30
 
+# Run parameters
 num_of_tiles = 28
-parallel_factor = (
-    245  # Parallel factor is practically how many images are to be processed
-)
-download = False
+parallel_factor = 245  # Parallel factor is how many images are to be processed
 num_of_filters = 10
+# You have to assert that the number of pyramids tasks per tile is
+# smaller than the number of the actual filters
 num_of_pyramid_tasks_per_tile = 10
-# You have to assert that the number of pyramids tasks per tile is smaller tyhan the number of the actual filters
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
@@ -53,15 +51,26 @@ compute_resources = {
     "limit_memory": "5Gi",
 }
 
-volume = k8s.V1Volume(
-    name="force-volume",
+dataset_volume = k8s.V1Volume(
+    name="eo-data",
     persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(
-        claim_name="force-pvc"
+        claim_name="fonda-datasets"
     ),
 )
 
-volume_mount = k8s.V1VolumeMount(
-    name="force-volume", mount_path=MOUNT_DATA_PATH, sub_path=None, read_only=False
+dataset_volume_mount = k8s.V1VolumeMount(
+    name="eo-data", mount_path=INPUT_DATA_PATH, sub_path=None, read_only=True
+)
+
+outputs_volume = k8s.V1Volume(
+    name="outputs-data",
+    persistent_volume_claim=k8s.V1PersistentVolumeClaimVolumeSource(
+        claim_name="force-airflow"
+    ),
+)
+
+outputs_volume_mount = k8s.V1VolumeMount(
+    name="outputs-data", mount_path=OUTPUTS_DATA_PATH, sub_path=None, read_only=False
 )
 
 security_context = k8s.V1SecurityContext(run_as_user=0)
@@ -88,67 +97,6 @@ with DAG(
     concurrency=10,
 ) as dag:
 
-    def will_download(*op_args):
-        download_run_parameter = op_args[0]
-        if download_run_parameter == "True":
-            download = True
-
-        if download == True:
-            return start_downloads.task_id
-        else:
-            return skip_downloads.task_id
-
-    # Decides if we'll do the downloading tasks or not
-    branch_downloads = BranchPythonOperator(
-        task_id="branch_downloads",
-        python_callable=will_download,
-        op_args=["{{ dag_run.conf['download'] }}"],
-    )
-
-    # Downloads auxiliary data
-    download_auxiliary = KubernetesPodOperator(
-        name="download_auxiliary",
-        namespace=namespace,
-        task_id="download_auxiliary",
-        image="bash",
-        cmds=["/bin/sh", "-c"],
-        arguments=[
-            f"wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/c4d90fc5b07c4955b979/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}"
-        ],
-        resources=compute_resources,
-        volumes=[volume],
-        security_context=security_context,
-        volume_mounts=[volume_mount],
-        get_logs=True,
-        dag=dag,
-    )
-
-    # Downloads level 1 data
-    download_level_1 = KubernetesPodOperator(
-        name="download_level_1",
-        namespace=namespace,
-        image="davidfrantz/force:3.6.5",
-        task_id="download_level_1",
-        cmds=["/bin/sh", "-c"],
-        arguments=[
-            f"mkdir -p {image_metadata_folderpath} && \
-            force-level1-csd -u -s {sensors_level1} {image_metadata_folderpath} && \
-            sed -i -e 's=^mozilla/DST_Root_CA_X3.crt=!mozilla/DST_ROOT_CA_X3.crt=' /etc/ca-certificates.conf && \
-            cd /usr/local/share/ca-certificates && \
-            wget https://letsencrypt.org/certs/isrgrootx1.pem && \
-            wget https://letsencrypt.org/certs/isrg-root-x2.pem && \
-            update-ca-certificates --fresh && \
-            mkdir -p {image_folderpath} && \
-            force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}"
-        ],
-        resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
-        security_context=security_context,
-        get_logs=True,
-        dag=dag,
-    )
-
     generate_allowed_tiles = KubernetesPodOperator(
         name="generate_allowed_tiles",
         namespace=namespace,
@@ -160,8 +108,8 @@ with DAG(
         ],
         security_context=security_context,
         resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
         dag=dag,
     )
@@ -177,8 +125,8 @@ with DAG(
         ],
         security_context=security_context,
         resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
         dag=dag,
     )
@@ -225,8 +173,8 @@ with DAG(
         ],
         security_context=security_context,
         resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
             "DATA": image_folderpath,
             "CUBEFILE": datacube_filepath,
@@ -262,8 +210,8 @@ with DAG(
             ],
             security_context=security_context,
             resources=compute_resources,
-            volumes=[volume],
-            volume_mounts=[volume_mount],
+            volumes=[dataset_volume, outputs_volume],
+            volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
                 "GLOBAL_PARAM": "/data/param_files/ard.prm",
                 "PARAM": f"/data/param_files/ard_{index}.prm",
@@ -321,7 +269,7 @@ with DAG(
         sed -i "/^OUTPUT_POL /cOUTPUT_POL = TRUE" $PARAM
         sed -i "/^OUTPUT_TRO /cOUTPUT_TRO = TRUE" $PARAM
         sed -i "/^OUTPUT_CAO /cOUTPUT_CAO = TRUE" $PARAM
-        
+
         cp $PARAM /data/param_files/
 
         echo "DONE"
@@ -329,8 +277,8 @@ with DAG(
         ],
         security_context=security_context,
         resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
             "DATA": image_folderpath,
             "CUBEFILE": datacube_filepath,
@@ -365,7 +313,7 @@ with DAG(
               echo "STARTING TIME SERIES ANALYSIS"
               cp $GLOBAL_PARAM $PARAM
               # Get the corresponding line from the allowed tiles file
-              TILE=`sed '{index}q;d' $TILE_FILE` 
+              TILE=`sed '{index}q;d' $TILE_FILE`
               X=${{TILE:1:4}}
               Y=${{TILE:7:11}}
               sed -i "/^BASE_MASK /cBASE_MASK = aoi.tif" $PARAM
@@ -376,22 +324,22 @@ with DAG(
 
               # Push results to xcom
               mkdir -p /airflow/xcom/
-              
+
               # Find *.tif files and store them in a list of files
               cd /data/trends/$TILE
               files=`find *.tif | tr '\n' ','`
               # Add Brackets
               files='['$files']'
               # Make json
-              echo '{{"tile":"'$TILE'", "files":"'$files'"}}' 
+              echo '{{"tile":"'$TILE'", "files":"'$files'"}}'
               echo '{{"tile":"'$TILE'", "files":"'$files'"}}' > /airflow/xcom/return.json
 
                   """
             ],
             security_context=security_context,
             resources=compute_resources,
-            volumes=[volume],
-            volume_mounts=[volume_mount],
+            volumes=[dataset_volume, outputs_volume],
+            volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             do_xcom_push=True,
             env_vars={
                 "GLOBAL_PARAM": "/data/param_files/tsa.prm",
@@ -430,8 +378,8 @@ with DAG(
                 ],
                 security_context=security_context,
                 resources=compute_resources,
-                volumes=[volume],
-                volume_mounts=[volume_mount],
+                volumes=[dataset_volume, outputs_volume],
+                volume_mounts=[dataset_volume_mount, outputs_volume_mount],
                 env_vars={
                     "INDEX": index,
                     "TRENDS_FOLDERPATH": trends_folderpath,
@@ -467,13 +415,13 @@ with DAG(
                 ln .$FILE $DATA_FOLDERPATH/$COUNTER$FILE
               done
               let COUNTER++
-            done 
+            done
             """
         ],
         security_context=security_context,
         resources=compute_resources,
-        volumes=[volume],
-        volume_mounts=[volume_mount],
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
             "TRENDS_FOLDERPATH": trends_folderpath,
             "DATA_FOLDERPATH": mosaic_folderpath,
@@ -498,8 +446,8 @@ with DAG(
             ],
             security_context=security_context,
             resources=compute_resources,
-            volumes=[volume],
-            volume_mounts=[volume_mount],
+            volumes=[dataset_volume, outputs_volume],
+            volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
                 "INDEX": index,
                 "MOSAIC_FOLDERPATH": mosaic_folderpath,
@@ -510,35 +458,19 @@ with DAG(
         mosaic_tasks.append(mosaic_task)
 
     dag_start = DummyOperator(task_id="Start", dag=dag)
-    start_downloads = DummyOperator(task_id="start_downloads", dag=dag)
-    skip_downloads = DummyOperator(task_id="skip_downloads", dag=dag)
-    wait_for_downloads = DummyOperator(task_id="wait_for_downloads", dag=dag)
-    downloads_completed = DummyOperator(
-        task_id="downloads_completed", dag=dag, trigger_rule=TriggerRule.ONE_SUCCESS
-    )
-
-    branch_downloads.set_upstream(dag_start)
-    branch_downloads >> [start_downloads, skip_downloads]
-
-    download_level_1.set_upstream(start_downloads)
-    download_auxiliary.set_upstream(start_downloads)
-    wait_for_downloads.set_upstream(download_level_1)
-    wait_for_downloads.set_upstream(download_auxiliary)
-    downloads_completed.set_upstream(wait_for_downloads)
-    downloads_completed.set_upstream(skip_downloads)
-    generate_allowed_tiles.set_upstream(downloads_completed)
-    generate_analysis_mask.set_upstream(downloads_completed)
+    generate_allowed_tiles.set_upstream(dag_start)
+    generate_analysis_mask.set_upstream(dag_start)
     prepare_level2.set_upstream(generate_allowed_tiles)
     prepare_level2.set_upstream(generate_analysis_mask)
     for task in preprocess_level2_tasks:
         task.set_upstream(prepare_level2)
         task.set_downstream(prepare_tsa)
 
-    for tsa_task, zzz in zip(tsa_tasks, pyramid_tasks_per_tile):
+    for tsa_task, pyramid_task_per_tile in zip(tsa_tasks, pyramid_tasks_per_tile):
         tsa_task.set_upstream(prepare_tsa)
         tsa_task.set_downstream(wait_for_trends)
         # Start pyramid batch of pyramid tasks for every tile.
-        tsa_task.set_downstream(zzz)
+        tsa_task.set_downstream(pyramid_task_per_tile)
 
     for task in mosaic_tasks:
         task.set_upstream(wait_for_trends)
