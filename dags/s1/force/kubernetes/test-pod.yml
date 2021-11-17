@@ -13,7 +13,7 @@ spec:
         runAsUser: 0
     volumeMounts:
     - name: fonda-datasets
-      mountPath: /data/inputs/b5/eo-01
+      mountPath: /data/input
     - name: force-airflow
       mountPath: /data/outputs
   restartPolicy: Never

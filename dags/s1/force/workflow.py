@@ -8,7 +8,7 @@ from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
 
 # Input data paths
-INPUT_DATA_PATH = "/data/inputs/b5/eo-01"
+INPUT_DATA_PATH = "/data/input/b5/eo-01"
 aoi_filepath = INPUT_DATA_PATH + "/vector/aoi.gpkg"
 datacube_folderpath = INPUT_DATA_PATH + "/grid"
 datacube_filepath = datacube_folderpath + "/datacube-definition.prj"
@@ -59,7 +59,7 @@ dataset_volume = k8s.V1Volume(
 )
 
 dataset_volume_mount = k8s.V1VolumeMount(
-    name="eo-data", mount_path="/data/inputs", sub_path=None, read_only=True
+    name="eo-data", mount_path="/data/input", sub_path=None, read_only=True
 )
 
 outputs_volume = k8s.V1Volume(
@@ -140,6 +140,7 @@ with DAG(
         arguments=[
             f"""
         wget -O {queue_filepath} https://box.hu-berlin.de/f/8cbd80805d484be1b91a/?dl=1
+        sed -i 's/download/b5\/eo-01\/download/g' {queue_filepath}
         mkdir -p /data/outputs/queue_files
         split -a 3 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/outputs/param_files
