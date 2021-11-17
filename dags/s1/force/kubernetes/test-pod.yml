@@ -2,6 +2,7 @@ apiVersion: v1
 kind: Pod
 metadata:
   name: test-force
+  namespace: default
 spec:
   containers:
   - name: test
@@ -11,11 +12,16 @@ spec:
         allowPrivilegeEscalation: false
         runAsUser: 0
     volumeMounts:
-    - name: force-pv
-      mountPath: /data
+    - name: fonda-datasets
+      mountPath: /data/inputs/b5/eo-01
+    - name: force-airflow
+      mountPath: /data/outputs
   restartPolicy: Never
   volumes:
-  - name: force-pv
+  - name: fonda-datasets
     persistentVolumeClaim:
-      claimName: force-pvc
+      claimName: fonda-datasets
+  - name: force-airflow
+    persistentVolumeClaim:
+      claimName: force-airflow
 
