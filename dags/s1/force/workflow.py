@@ -138,12 +138,14 @@ with DAG(
         task_id="prepare_level2",
         cmds=["/bin/sh", "-c"],
         arguments=[
-            f"""mkdir -p /data/queue_files
-        split -a 3 -l$((`wc -l < /data/queue.txt`/{parallel_factor})) --numeric-suffixes=0 /data/queue.txt /data/queue_files/queue_ --additional-suffix=.txt
-        mkdir -p /data/param_files
-        mkdir -p /data/level2_ard
-        mkdir -p /data/level2_log
-        mkdir -p /data/level2_tmp
+            f"""
+        wget -O {queue_filepath} https://box.hu-berlin.de/f/c4d90fc5b07c4955b979/?dl=1
+        mkdir -p /data/outputs/queue_files
+        split -a 3 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
+        mkdir -p /data/outputs/param_files
+        mkdir -p /data/outputs/level2_ard
+        mkdir -p /data/outputs/level2_log
+        mkdir -p /data/outputs/level2_tmp
         force-parameter . LEVEL2 0
         mv LEVEL2-skeleton.prm $PARAM
         # read grid definition
@@ -156,10 +158,10 @@ with DAG(
         # sed -i "/^PARALLEL_READS /cPARALLEL_READS = TRUE" $PARAM
         # sed -i "/^DELAY /cDELAY = 2" $PARAM
         sed -i "/^NPROC /cNPROC = 1" $PARAM
-        sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/level2_ard/" $PARAM
+        sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/outputs/level2_ard/" $PARAM
         sed -i "/^NPROCE /cNPROC = 2" $PARAM
-        sed -i "/^DIR_LOG /cDIR_LOG = /data/level2_log/" $PARAM
-        sed -i "/^DIR_TEMP /cDIR_TEMP = /data/level2_tmp/" $PARAM
+        sed -i "/^DIR_LOG /cDIR_LOG = /data/outputs/level2_log/" $PARAM
+        sed -i "/^DIR_TEMP /cDIR_TEMP = /data/outputs/level2_tmp/" $PARAM
         sed -i "/^FILE_DEM /cFILE_DEM = $DEM/dem.vrt" $PARAM
         sed -i "/^DIR_WVPLUT /cDIR_WVPLUT = $WVDB" $PARAM
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
@@ -182,7 +184,7 @@ with DAG(
             "WVDB": wvdb,
             "TILE": allowed_tiles_filepath,
             "NTHREAD": "2",
-            "PARAM": "/data/param_files/ard.prm",
+            "PARAM": "/data/outputs/param_files/ard.prm",
         },
         get_logs=True,
         dag=dag,
@@ -213,9 +215,9 @@ with DAG(
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
-                "GLOBAL_PARAM": "/data/param_files/ard.prm",
-                "PARAM": f"/data/param_files/ard_{index}.prm",
-                "QUEUE_FILE": f"/data/queue_files/queue_{index}.txt",
+                "GLOBAL_PARAM": "/data/outputs/param_files/ard.prm",
+                "PARAM": f"/data/outputs/param_files/ard_{index}.prm",
+                "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
             },
             get_logs=True,
             dag=dag,
@@ -270,7 +272,7 @@ with DAG(
         sed -i "/^OUTPUT_TRO /cOUTPUT_TRO = TRUE" $PARAM
         sed -i "/^OUTPUT_CAO /cOUTPUT_CAO = TRUE" $PARAM
 
-        cp $PARAM /data/param_files/
+        cp $PARAM /data/outputs/param_files/
 
         echo "DONE"
             """
@@ -326,7 +328,7 @@ with DAG(
               mkdir -p /airflow/xcom/
 
               # Find *.tif files and store them in a list of files
-              cd /data/trends/$TILE
+              cd /data/outputs/trends/$TILE
               files=`find *.tif | tr '\n' ','`
               # Add Brackets
               files='['$files']'
@@ -342,8 +344,8 @@ with DAG(
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             do_xcom_push=True,
             env_vars={
-                "GLOBAL_PARAM": "/data/param_files/tsa.prm",
-                "PARAM": f"/data/param_files/tsa_{index}.prm",
+                "GLOBAL_PARAM": "/data/outputs/param_files/tsa.prm",
+                "PARAM": f"/data/outputs/param_files/tsa_{index}.prm",
                 "TILE_FILE": allowed_tiles_filepath,
             },
             get_logs=True,
