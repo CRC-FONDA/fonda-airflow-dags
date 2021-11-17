@@ -59,7 +59,7 @@ dataset_volume = k8s.V1Volume(
 )
 
 dataset_volume_mount = k8s.V1VolumeMount(
-    name="eo-data", mount_path=INPUT_DATA_PATH, sub_path=None, read_only=True
+    name="eo-data", mount_path="/data/inputs", sub_path=None, read_only=True
 )
 
 outputs_volume = k8s.V1Volume(
