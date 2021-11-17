@@ -139,7 +139,7 @@ with DAG(
         cmds=["/bin/sh", "-c"],
         arguments=[
             f"""
-        wget -O {queue_filepath} https://box.hu-berlin.de/f/c4d90fc5b07c4955b979/?dl=1
+        wget -O {queue_filepath} https://box.hu-berlin.de/f/8cbd80805d484be1b91a/?dl=1
         mkdir -p /data/outputs/queue_files
         split -a 3 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/outputs/param_files
