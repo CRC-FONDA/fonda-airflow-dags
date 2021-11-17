@@ -7,15 +7,18 @@ from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import \
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
 
-# Input data paths
+# Read only input data paths
 INPUT_DATA_PATH = "/data/input/b5/eo-01"
-aoi_filepath = INPUT_DATA_PATH + "/vector/aoi.gpkg"
-datacube_folderpath = INPUT_DATA_PATH + "/grid"
-datacube_filepath = datacube_folderpath + "/datacube-definition.prj"
 image_folderpath = INPUT_DATA_PATH + "/image_data"
-dem_folderpath = INPUT_DATA_PATH + "/dem"
-wvdb = INPUT_DATA_PATH + "/wvdb"
-endmember_filepath = INPUT_DATA_PATH + "/endmember/hostert-2003.txt"
+
+# Auxillary input data paths
+AUX_DATA_PATH = "/data/outputs/auxillary_data"
+aoi_filepath = AUX_DATA_PATH + "/vector/aoi.gpkg"
+datacube_folderpath = AUX_DATA_PATH + "/grid"
+datacube_filepath = datacube_folderpath + "/datacube-definition.prj"
+dem_folderpath = AUX_DATA_PATH + "/dem"
+wvdb = AUX_DATA_PATH + "/wvdb"
+endmember_filepath = AUX_DATA_PATH + "/endmember/hostert-2003.txt"
 
 # Output data paths
 OUTPUTS_DATA_PATH = "/data/outputs"
