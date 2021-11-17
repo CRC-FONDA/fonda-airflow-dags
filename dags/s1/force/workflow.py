@@ -163,7 +163,7 @@ with DAG(
         sed -i "/^NPROCE /cNPROC = 2" $PARAM
         sed -i "/^DIR_LOG /cDIR_LOG = /data/outputs/level2_log/" $PARAM
         sed -i "/^DIR_TEMP /cDIR_TEMP = /data/outputs/level2_tmp/" $PARAM
-        sed -i "/^FILE_DEM /cFILE_DEM = $DEM/dem.vrt" $PARAM
+        sed -i "/^FILE_DEM /cFILE_DEM = $DEM/crete_srtm-aster.vrt" $PARAM
         sed -i "/^DIR_WVPLUT /cDIR_WVPLUT = $WVDB" $PARAM
         sed -i "/^FILE_TILE /cFILE_TILE = $TILE" $PARAM
         sed -i "/^TILE_SIZE /cTILE_SIZE = $TILESIZE" $PARAM
