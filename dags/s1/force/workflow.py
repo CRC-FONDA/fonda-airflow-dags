@@ -38,7 +38,7 @@ mask_resolution = 30
 
 # Run parameters
 num_of_tiles = 28
-parallel_factor = 245  # Parallel factor is how many images are to be processed
+parallel_factor = 1397  # Parallel factor is how many images are to be processed
 num_of_filters = 10
 # You have to assert that the number of pyramids tasks per tile is
 # smaller than the number of the actual filters
@@ -97,7 +97,6 @@ with DAG(
     start_date=days_ago(2),
     tags=["force"],
     max_active_runs=1,
-    concurrency=10,
 ) as dag:
 
     generate_allowed_tiles = KubernetesPodOperator(
@@ -163,7 +162,6 @@ with DAG(
         # sed -i "/^DELAY /cDELAY = 2" $PARAM
         sed -i "/^NPROC /cNPROC = 1" $PARAM
         sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/outputs/level2_ard/" $PARAM
-        sed -i "/^NPROCE /cNPROC = 2" $PARAM
         sed -i "/^DIR_LOG /cDIR_LOG = /data/outputs/level2_log/" $PARAM
         sed -i "/^DIR_TEMP /cDIR_TEMP = /data/outputs/level2_tmp/" $PARAM
         sed -i "/^FILE_DEM /cFILE_DEM = $DEM/crete_srtm-aster.vrt" $PARAM
