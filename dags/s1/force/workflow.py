@@ -103,6 +103,7 @@ with DAG(
         name="generate_allowed_tiles",
         namespace=namespace,
         image="davidfrantz/force:3.6.5",
+        label="force",
         task_id="generate_allowed_tiles",
         cmds=["/bin/sh", "-c"],
         arguments=[
@@ -120,6 +121,7 @@ with DAG(
         name="generate_analysis_mask",
         namespace=namespace,
         image="davidfrantz/force:3.6.5",
+        label="force",
         task_id="generate_analysis_mask",
         cmds=["/bin/sh", "-c"],
         arguments=[
@@ -137,6 +139,7 @@ with DAG(
         name="prepare_level2",
         namespace=namespace,
         image="davidfrantz/force:3.6.5",
+        label="force",
         task_id="prepare_level2",
         cmds=["/bin/sh", "-c"],
         arguments=[
@@ -199,6 +202,7 @@ with DAG(
             name="preprocess_level2_" + index,
             namespace=namespace,
             image="davidfrantz/force:3.6.5",
+            label="force",
             task_id="preprocess_level2_" + index,
             cmds=["/bin/sh", "-c"],
             arguments=[
@@ -232,6 +236,7 @@ with DAG(
         name="prepape_tsa",
         namespace=namespace,
         image="davidfrantz/force:3.6.5",
+        label="force",
         task_id="prepare_tsa",
         cmds=["/bin/sh", "-c"],
         arguments=[
@@ -310,6 +315,7 @@ with DAG(
             name="tsa_task_" + index,
             namespace=namespace,
             image="davidfrantz/force:3.6.5",
+            label="force",
             task_id="tsa_task_" + index,
             cmds=["/bin/bash", "-c"],
             arguments=[
@@ -369,6 +375,7 @@ with DAG(
                 name="pyramid_task_" + index,
                 namespace=namespace,
                 image="davidfrantz/force:3.6.5",
+                label="force",
                 task_id="pyramid_task_" + index,
                 cmds=["/bin/bash", "-c"],
                 arguments=[
@@ -399,6 +406,7 @@ with DAG(
         name="wait_for_trends",
         namespace=namespace,
         image="davidfrantz/force:3.6.5",
+        label="force",
         task_id="wait_for_trends",
         cmds=["/bin/bash", "-c"],
         arguments=[
@@ -441,6 +449,7 @@ with DAG(
             name="mosaic_task_" + index,
             namespace=namespace,
             image="davidfrantz/force:3.6.5",
+            label="force",
             task_id="mosaic_task_" + index,
             cmds=["/bin/bash", "-c"],
             arguments=[
