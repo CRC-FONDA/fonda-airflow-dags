@@ -194,7 +194,7 @@ with DAG(
 
     preprocess_level2_tasks = []
     for i in range(parallel_factor):
-        index = f"{i:03d}"
+        index = f"{i:04d}"
         preprocess_level2_task = KubernetesPodOperator(
             name="preprocess_level2_" + index,
             namespace=namespace,
