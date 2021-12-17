@@ -470,6 +470,54 @@ with DAG(
         )
         mosaic_tasks.append(mosaic_task)
 
+    check_results = KubernetesPodOperator(
+        name="check_results",
+        namespace=namespace,
+        image="davidfrantz/force:3.6.5",
+        labels={"workflow": "force"},
+        task_id="check_results",
+        cmds=["/bin/sh", "-c"],
+        arguments=[
+            """\
+        mv $MOSAIC_FOLDERPATH/0/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_TSI.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/1/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VBL-CAO.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/2/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VBL-POL.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/3/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VBL-TRO.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/4/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VPS-CAO.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/5/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VPS-POL.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/6/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VPS-TRO.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/7/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-CAO.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/8/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-POL.vrt $TRENDS_FOLDERPATH/mosaic
+        mv $MOSAIC_FOLDERPATH/9/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-TRO.vrt $TRENDS_FOLDERPATH/mosaic
+
+
+
+            """
+        ],
+        security_context=security_context,
+        resources=compute_resources,
+        volumes=[dataset_volume, outputs_volume],
+        volume_mounts=[dataset_volume_mount, outputs_volume_mount],
+        env_vars={
+            "DATA": image_folderpath,
+            "CUBEFILE": datacube_filepath,
+            "DEM": dem_folderpath,
+            "WVDB": wvdb,
+            "TILE": allowed_tiles_filepath,
+            "NTHREAD": "2",
+            "PARAM": "tsa.prm",
+            "ENDMEMBER": endmember_filepath,
+            "ARD_FOLDER": ard_folderpath,
+            "TRENDS_FOLDER": trends_folderpath,
+            "MASKS_FOLDER": masks_folderpath,
+            "AOI_PATH": aoi_filepath,
+            "START_DATE": start_date.isoformat(),
+            "END_DATE": end_date.isoformat(),
+        },
+        get_logs=True,
+        dag=dag,
+    )
+
     dag_start = DummyOperator(task_id="Start", dag=dag)
     generate_allowed_tiles.set_upstream(dag_start)
     generate_analysis_mask.set_upstream(dag_start)
