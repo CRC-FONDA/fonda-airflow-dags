@@ -78,6 +78,34 @@ outputs_volume_mount = k8s.V1VolumeMount(
 
 security_context = k8s.V1SecurityContext(run_as_user=0)
 
+experiment_affinity={
+    'nodeAffinity': {
+        # requiredDuringSchedulingIgnoredDuringExecution means in order
+        # for a pod to be scheduled on a node, the node must have the
+        # specified labels. However, if labels on a node change at
+        # runtime such that the affinity rules on a pod are no longer
+        # met, the pod will still continue to run on the node.
+        'requiredDuringSchedulingIgnoredDuringExecution': {
+            'nodeSelectorTerms': [{
+                'matchExpressions': [{
+                    # When nodepools are created in Google Kubernetes
+                    # Engine, the nodes inside of that nodepool are
+                    # automatically assigned the label
+                    # 'cloud.google.com/gke-nodepool' with the value of
+                    # the nodepool's name.
+                    'key': 'usedby',
+                    'operator': 'In',
+                    # The label key's value that pods can be scheduled
+                    # on.
+                    'values': [
+                        'vasilis',
+                    ]
+                }]
+            }]
+        }
+    }
+}
+
 # DAG
 default_args = {
     "owner": "FONDA S1",
@@ -114,6 +142,7 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
@@ -132,6 +161,7 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
@@ -192,6 +222,7 @@ with DAG(
             "PARAM": "/data/outputs/param_files/ard.prm",
         },
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
@@ -226,6 +257,7 @@ with DAG(
                 "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
             },
             get_logs=True,
+            affinity=experiment_affinity,
             dag=dag,
             retries=5,
             retry_delay=timedelta(minutes=10),
@@ -305,6 +337,7 @@ with DAG(
             "END_DATE": end_date.isoformat(),
         },
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
@@ -357,6 +390,7 @@ with DAG(
                 "TILE_FILE": allowed_tiles_filepath,
             },
             get_logs=True,
+            affinity=experiment_affinity,
             dag=dag,
         )
         tsa_tasks.append(tsa_task)
@@ -397,6 +431,7 @@ with DAG(
                     "FILE_INDEX": file_index,
                 },
                 get_logs=True,
+                affinity=experiment_affinity,
                 dag=dag,
             )
             pyramid_tasks_in_tile.append(pyramid_task)
@@ -439,6 +474,7 @@ with DAG(
             "DATA_FOLDERPATH": mosaic_folderpath,
         },
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
@@ -466,6 +502,7 @@ with DAG(
                 "MOSAIC_FOLDERPATH": mosaic_folderpath,
             },
             get_logs=True,
+            affinity=experiment_affinity,
             dag=dag,
         )
         mosaic_tasks.append(mosaic_task)
@@ -515,6 +552,7 @@ with DAG(
             "END_DATE": end_date.isoformat(),
         },
         get_logs=True,
+        affinity=experiment_affinity,
         dag=dag,
     )
 
