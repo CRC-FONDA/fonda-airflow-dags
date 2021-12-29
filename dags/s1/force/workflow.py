@@ -473,7 +473,7 @@ with DAG(
     check_results = KubernetesPodOperator(
         name="check_results",
         namespace=namespace,
-        image="davidfrantz/force:3.6.5",
+        image="rocker/geospatial:3.6.3",
         labels={"workflow": "force"},
         task_id="check_results",
         cmds=["/bin/sh", "-c"],
@@ -489,7 +489,7 @@ with DAG(
         mv $MOSAIC_FOLDERPATH/7/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-CAO.vrt $TRENDS_FOLDERPATH/mosaic
         mv $MOSAIC_FOLDERPATH/8/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-POL.vrt $TRENDS_FOLDERPATH/mosaic
         mv $MOSAIC_FOLDERPATH/9/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VSA-TRO.vrt $TRENDS_FOLDERPATH/mosaic
-
+        Rscript test.R /data/outputs/trends/mosaic/ /data/outputs/check-results/reference.RData log2.log
 
 
             """
@@ -535,3 +535,4 @@ with DAG(
 
     for task in mosaic_tasks:
         task.set_upstream(wait_for_trends)
+        task.set_downstream(check_results)
