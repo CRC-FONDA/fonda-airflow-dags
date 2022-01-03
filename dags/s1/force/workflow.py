@@ -177,7 +177,7 @@ with DAG(
         wget -O {queue_filepath} https://box.hu-berlin.de/f/8cbd80805d484be1b91a/?dl=1
         sed -i 's/download/b5\/eo-01\/download/g' {queue_filepath}
         mkdir -p /data/outputs/queue_files
-        split -a 3 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
+        split -a 4 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/outputs/param_files
         mkdir -p /data/outputs/level2_ard
         mkdir -p /data/outputs/level2_log
