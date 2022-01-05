@@ -24,4 +24,6 @@ spec:
   - name: force-airflow
     persistentVolumeClaim:
       claimName: force-airflow
+  nodeSelector:
+    usedby: vasilis
 
