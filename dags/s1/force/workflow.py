@@ -38,7 +38,7 @@ mask_resolution = 30
 
 # Run parameters
 num_of_tiles = 28
-parallel_factor = 1397  # Parallel factor is how many images are to be processed
+parallel_factor = 2794  # Parallel factor is how many images are to be processed
 num_of_filters = 10
 # You have to assert that the number of pyramids tasks per tile is
 # smaller than the number of the actual filters
