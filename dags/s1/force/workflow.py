@@ -537,7 +537,7 @@ with DAG(
         env_vars={
             "TRENDS_FOLDER": trends_folderpath,
             "MOSAIC_FOLDERPATH": mosaic_folderpath,
-            "TESTS_FOLDERPATH": test_folderpath,
+            "TESTS_FOLDERPATH": tests_folderpath,
         },
         get_logs=True,
         affinity=experiment_affinity,
