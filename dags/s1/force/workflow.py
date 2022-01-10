@@ -517,6 +517,7 @@ with DAG(
         cmds=["/bin/sh", "-c"],
         arguments=[
             """\
+        mkdir -p $TRENDS_FOLDERPATH/mosaic
         mv $MOSAIC_FOLDERPATH/0/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_TSI.vrt $TRENDS_FOLDERPATH/mosaic/
         mv $MOSAIC_FOLDERPATH/1/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VBL-CAO.vrt $TRENDS_FOLDERPATH/mosaic/
         mv $MOSAIC_FOLDERPATH/2/mosaic/1984-2006_001-365_HL_TSA_LNDLG_SMA_VBL-POL.vrt $TRENDS_FOLDERPATH/mosaic/
