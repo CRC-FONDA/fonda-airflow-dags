@@ -9,7 +9,6 @@ from kubernetes.client import models as k8s
 
 # Read only input data paths
 INPUT_DATA_PATH = "/data/input/b5/eo-01"
-image_folderpath = INPUT_DATA_PATH + "/image_data"
 
 # Auxillary input data paths
 AUX_DATA_PATH = "/data/outputs/auxillary_data"
@@ -176,7 +175,6 @@ with DAG(
         arguments=[
             f"""
         # wget -O {queue_filepath} https://box.hu-berlin.de/f/8cbd80805d484be1b91a/?dl=1
-        sed -i 's/download/b5\/eo-01\/download/g' {queue_filepath}
         mkdir -p /data/outputs/queue_files
         split -a 4 -l$((`wc -l < {queue_filepath}`/{parallel_factor})) --numeric-suffixes=0 {queue_filepath} /data/outputs/queue_files/queue_ --additional-suffix=.txt
         mkdir -p /data/outputs/param_files
@@ -214,7 +212,6 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
-            "DATA": image_folderpath,
             "CUBEFILE": datacube_filepath,
             "DEM": dem_folderpath,
             "WVDB": wvdb,
@@ -322,7 +319,6 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
-            "DATA": image_folderpath,
             "CUBEFILE": datacube_filepath,
             "DEM": dem_folderpath,
             "WVDB": wvdb,
