@@ -532,7 +532,7 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
-            "TRENDS_FOLDER": trends_folderpath,
+            "TRENDS_FOLDERPATH": trends_folderpath,
             "MOSAIC_FOLDERPATH": mosaic_folderpath,
             "TESTS_FOLDERPATH": tests_folderpath,
         },
