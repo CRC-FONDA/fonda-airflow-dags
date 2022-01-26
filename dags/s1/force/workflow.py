@@ -49,9 +49,9 @@ namespace = "default"
 
 compute_resources = {
     "request_cpu": "1000m",
-    "request_memory": "3Gi",
-    "limit_cpu": "2000m",
-    "limit_memory": "5Gi",
+    "request_memory": "4.5Gi",
+    "limit_cpu": "1000m",
+    "limit_memory": "4.5Gi",
 }
 
 dataset_volume = k8s.V1Volume(
