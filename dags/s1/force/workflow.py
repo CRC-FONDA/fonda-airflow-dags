@@ -241,13 +241,15 @@ with DAG(
             cmds=["/bin/sh", "-c"],
             arguments=[
                 """\
-            echo "STARTING LEVEL2 PROCESSING"
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
-            date
-            force-level2 $PARAM
-            echo "DONE"
-            date
+            if force-level2 $PARAM
+            then
+                echo "DONE"
+            else
+                echo "ERROR"
+                exit 1
+            fi
                 """
             ],
             security_context=security_context,
