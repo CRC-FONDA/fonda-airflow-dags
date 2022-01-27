@@ -535,9 +535,9 @@ with DAG(
         security_context=security_context,
         resources={
             "request_cpu": "2000m",
-            "request_memory": "6.5Gi",
+            "request_memory": "10Gi",
             "limit_cpu": "2000m",
-            "limit_memory": "6.5Gi",
+            "limit_memory": "10Gi",
         },
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
