@@ -536,8 +536,6 @@ with DAG(
         resources={
             "request_cpu": "2000m",
             "request_memory": "10Gi",
-            "limit_cpu": "2000m",
-            "limit_memory": "10Gi",
         },
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
