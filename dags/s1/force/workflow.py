@@ -256,6 +256,7 @@ with DAG(
             security_context=security_context,
             resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
+            pool="not_default_pool",
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
                 "GLOBAL_PARAM": "/data/outputs/param_files/ard.prm",
