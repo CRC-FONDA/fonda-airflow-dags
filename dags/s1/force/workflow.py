@@ -50,9 +50,9 @@ namespace = "default"
 
 compute_resources = {
     "request_cpu": "1000m",
-    "request_memory": "2.5Gi",
+    "request_memory": "4.5Gi",
     "limit_cpu": "1000m",
-    "limit_memory": "2.5Gi",
+    "limit_memory": "4.5Gi",
 }
 
 dataset_volume = k8s.V1Volume(
@@ -256,7 +256,6 @@ with DAG(
             security_context=security_context,
             resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
-            pool="not_default_pool",
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
                 "GLOBAL_PARAM": "/data/outputs/param_files/ard.prm",
