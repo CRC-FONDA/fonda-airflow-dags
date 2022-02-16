@@ -7,7 +7,9 @@ pipeline {
                 script {
                     def scannerHome = tool 'SonarScanner';
                     withSonarQubeEnv() {
-                        sh "${scannerHome}/bin/sonar-scanner"
+                        sh """
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=fonda-airflow-dags"
+                        """
                     }
                 }
             }
