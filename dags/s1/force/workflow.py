@@ -257,7 +257,7 @@ with DAG(
             task_id="preprocess_level2_" + index,
             cmds=["/bin/sh", "-c"],
             arguments=[
-                """#\
+                """\
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
             force-level2 $PARAM
