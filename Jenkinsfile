@@ -3,7 +3,9 @@ pipeline {
     
     stages {
         stage('Test') {
-            // TODO: Add tests here
+            steps {
+                echo "TODO: Add tests"
+            }
         }
 
         stage('Static Code Analysis') {
