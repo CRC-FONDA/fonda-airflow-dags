@@ -226,7 +226,7 @@ with DAG(
         sed -i "/^ORIGIN_LON /cORIGIN_LON = $ORIGINX" $PARAM
         sed -i "/^ORIGIN_LAT /cORIGIN_LAT = $ORIGINY" $PARAM
         sed -i "/^PROJECTION /cPROJECTION = $CRS" $PARAM
-        sed -i "/^NTHREAD /cNTHREAD = 2" $PARAM
+        sed -i "/^NTHREAD /cNTHREAD = 4" $PARAM
             """
         ],
         security_context=security_context,
@@ -238,7 +238,7 @@ with DAG(
             "DEM": dem_folderpath,
             "WVDB": wvdb,
             "TILE": allowed_tiles_filepath,
-            "NTHREAD": "2",
+            "NTHREAD": "4",
             "PARAM": "/data/outputs/param_files/ard.prm",
         },
         get_logs=True,
@@ -257,17 +257,11 @@ with DAG(
             task_id="preprocess_level2_" + index,
             cmds=["/bin/sh", "-c"],
             arguments=[
-                """\
+                """#\
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
-            if force-level2 $PARAM
-            then
-                echo "DONE"
-            else
-                echo "ERROR"
-                exit 1
-            fi
-                """
+            force-level2 $PARAM
+            """
             ],
             security_context=security_context,
             resources=compute_resources,
