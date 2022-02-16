@@ -2,6 +2,10 @@ pipeline {
     agent any
     
     stages {
+        stage('Test') {
+            // TODO: Add tests
+        }
+        
         stage('Static Code Analysis') {
             steps {
                 script {
