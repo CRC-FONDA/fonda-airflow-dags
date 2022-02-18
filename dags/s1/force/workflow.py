@@ -206,7 +206,7 @@ with DAG(
             "MASKS_FOLDERPATH": masks_folderpath,
             "DATACUBE_FOLDERPATH": datacube_folderpath,
             "AOI_FILEPATH": aoi_filepath,
-            "MASK_RESOLUTION": mask_resolution,
+            "MASK_RESOLUTION": str(mask_resolution),
         },
         get_logs=True,
         affinity=experiment_affinity,
