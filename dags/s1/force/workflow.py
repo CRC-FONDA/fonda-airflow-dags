@@ -65,9 +65,9 @@ preprocess_resources = {
 }
 
 pyramid_resources = {
-    "request_cpu": "1000m",
+    "request_cpu": "1",
     "request_memory": "1.5Gi",
-    "limit_cpu": "1000m",
+    "limit_cpu": "1",
     "limit_memory": "1.5Gi",
 }
 
@@ -79,10 +79,10 @@ tsa_resources = {
 }
 
 mosaic_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
+    "request_cpu": "1",
+    "request_memory": "1.5Gi",
+    "limit_cpu": "1",
+    "limit_memory": "1.5Gi",
 }
 
 
