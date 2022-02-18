@@ -39,9 +39,11 @@ mask_resolution = 30
 
 # Run parameters
 num_of_tiles = 28
-parallel_factor = 2794  # Parallel factor is how many images are to be processed
+# Parallel factor is how many images are to be processed,
+# the maximum amount of parallelization that's possible
+parallel_factor = 2794  
 num_of_filters = 10
-# You have to assert that the number of pyramids tasks per tile is
+# One has to assert that the number of pyramids tasks per tile is
 # smaller than the number of the actual filters
 num_of_pyramid_tasks_per_tile = 10
 
@@ -49,6 +51,13 @@ num_of_pyramid_tasks_per_tile = 10
 namespace = "default"
 
 compute_resources = {
+    "request_cpu": "2000m",
+    "request_memory": "4.5Gi",
+    "limit_cpu": "2000m",
+    "limit_memory": "4.5Gi",
+}
+
+preprocess_resources = {
     "request_cpu": "2000m",
     "request_memory": "4.5Gi",
     "limit_cpu": "2000m",
@@ -63,6 +72,13 @@ pyramid_resources = {
 }
 
 tsa_resources = {
+    "request_cpu": "2000m",
+    "request_memory": "4.5Gi",
+    "limit_cpu": "2000m",
+    "limit_memory": "4.5Gi",
+}
+
+mosaic_resources = {
     "request_cpu": "2000m",
     "request_memory": "4.5Gi",
     "limit_cpu": "2000m",
