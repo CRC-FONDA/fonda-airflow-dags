@@ -161,7 +161,7 @@ with DAG(
     start_date=days_ago(2),
     tags=["force"],
     max_active_runs=1,
-    concurrency=30,
+    concurrency=70,
 ) as dag:
 
     generate_allowed_tiles = KubernetesPodOperator(
@@ -259,6 +259,7 @@ with DAG(
         resources=preprocess_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
+        pool='restricted_pool',
         env_vars={
             "QUEUE_FILEPATH": queue_filepath,
             "PARALLEL_FACTOR": parallel_factor,
@@ -505,7 +506,7 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources=compute_resources,
+        resources=mosaic_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
