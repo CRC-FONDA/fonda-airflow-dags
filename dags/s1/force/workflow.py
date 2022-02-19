@@ -297,6 +297,7 @@ with DAG(
                 else
                     echo "NOT OK"
                     exit 1
+                fi
                 """
             ],
             security_context=security_context,
