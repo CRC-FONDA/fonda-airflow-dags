@@ -288,7 +288,15 @@ with DAG(
                 """
                 cp $GLOBAL_PARAM $PARAM
                 sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
-                force-level2 $PARAM
+                # force force to return true because of bug: https://github.com/davidfrantz/force/issues/168
+                force-level2 $PARAM || true
+                if cat &QUEUE_FILE | grep "DONE"
+                then 
+                    echo "OK"
+                    exit 0
+                else
+                    echo "NOT OK"
+                    exit 1
                 """
             ],
             security_context=security_context,
