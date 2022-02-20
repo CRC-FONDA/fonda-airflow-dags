@@ -136,6 +136,8 @@ with DAG(
     generate_allowed_tiles = KubernetesPodOperator(
         name="generate_allowed_tiles",
         namespace=namespace,
+        reattach_on_restart=False,
+        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="generate_allowed_tiles",
@@ -155,6 +157,8 @@ with DAG(
     generate_analysis_mask = KubernetesPodOperator(
         name="generate_analysis_mask",
         namespace=namespace,
+        reattach_on_restart=False,
+        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="generate_analysis_mask",
@@ -174,6 +178,8 @@ with DAG(
     prepare_level2 = KubernetesPodOperator(
         name="prepare_level2",
         namespace=namespace,
+        reattach_on_restart=False,
+        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="prepare_level2",
@@ -236,6 +242,8 @@ with DAG(
         preprocess_level2_task = KubernetesPodOperator(
             name="preprocess_level2_" + index,
             namespace=namespace,
+            reattach_on_restart=False,
+            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="preprocess_level2_" + index,
@@ -267,6 +275,8 @@ with DAG(
     prepare_tsa = KubernetesPodOperator(
         name="prepape_tsa",
         namespace=namespace,
+        reattach_on_restart=False,
+        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="prepare_tsa",
@@ -346,6 +356,8 @@ with DAG(
         tsa_task = KubernetesPodOperator(
             name="tsa_task_" + index,
             namespace=namespace,
+            reattach_on_restart=False,
+            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="tsa_task_" + index,
@@ -407,6 +419,8 @@ with DAG(
             pyramid_task = KubernetesPodOperator(
                 name="pyramid_task_" + index,
                 namespace=namespace,
+                reattach_on_restart=False,
+                is_delete_operator_pod=True,
                 image="davidfrantz/force:3.6.5",
                 labels={"workflow": "force"},
                 task_id="pyramid_task_" + index,
@@ -439,6 +453,8 @@ with DAG(
     wait_for_trends = KubernetesPodOperator(
         name="wait_for_trends",
         namespace=namespace,
+        reattach_on_restart=False,
+        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="wait_for_trends",
@@ -483,6 +499,8 @@ with DAG(
         mosaic_task = KubernetesPodOperator(
             name="mosaic_task_" + index,
             namespace=namespace,
+            reattach_on_restart=False,
+            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="mosaic_task_" + index,
