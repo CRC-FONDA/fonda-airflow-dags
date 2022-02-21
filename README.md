@@ -1,3 +1,7 @@
+[![Quality Gate Status](https://sonar.soeren.io/api/project_badges/measure?project=fonda-airflow-dags&metric=alert_status)](https://sonar.soeren.io/dashboard?id=fonda-airflow-dags)
+[![Reliability Rating](https://sonar.soeren.io/api/project_badges/measure?project=fonda-airflow-dags&metric=reliability_rating)](https://sonar.soeren.io/dashboard?id=fonda-airflow-dags)
+[![Maintainability Rating](https://sonar.soeren.io/api/project_badges/measure?project=fonda-airflow-dags&metric=sqale_rating)](https://sonar.soeren.io/dashboard?id=fonda-airflow-dags)
+
 FONDA Airflow Dags
 ==============
 This repository contains [Apache Airflow](https://airflow.apache.org/) DAGs used in the FONDA project. 
