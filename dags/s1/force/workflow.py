@@ -393,7 +393,7 @@ with DAG(
             "MASKS_FOLDER": masks_folderpath,
             "START_DATE": start_date.isoformat(),
             "END_DATE": end_date.isoformat(),
-            "MASK_RESOLUTION": mask_resolution,
+            "MASK_RESOLUTION": str(mask_resolution),
         },
         get_logs=True,
         affinity=experiment_affinity,
