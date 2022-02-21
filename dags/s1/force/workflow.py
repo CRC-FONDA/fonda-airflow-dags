@@ -150,7 +150,7 @@ default_args = {
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 0,
-    "retry_delay": timedelta(minutes=100),
+    "retry_delay": timedelta(minutes=5),
 }
 
 with DAG(
@@ -321,8 +321,7 @@ with DAG(
             get_logs=True,
             affinity=experiment_affinity,
             dag=dag,
-            retries=5,
-            retry_delay=timedelta(minutes=10),
+            retries=10,
         )
         preprocess_level2_tasks.append(preprocess_level2_task)
 
