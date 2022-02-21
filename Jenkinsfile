@@ -14,7 +14,8 @@ pipeline {
                     def scannerHome = tool 'SonarScanner';
                     withSonarQubeEnv() {
                         sh """
-                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=fonda-airflow-dags
+                            ${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=fonda-airflow-dags \
+                                -Dsonar.branch.name=$BRANCH_NAME
                         """
                     }
                 }
