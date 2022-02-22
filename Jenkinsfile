@@ -12,12 +12,12 @@ pipeline {
                     sh 'pip install -r requirements.txt'
                     sh 'py.test --junitxml test-results.xml dags/s1/force/test.py'
                 }
-                post {
-                    always {
-                        junit 'test-results.xml'
-                        archiveArtifacts 'test-results.xml'
+            }
+            post {
+                always {
+                    junit 'test-results.xml'
+                    archiveArtifacts 'test-results.xml'
                     }
-                }
             }
         }
 
