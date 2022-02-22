@@ -7,8 +7,8 @@ pipeline {
     
     stages {
         stage('Test') {
-            container('python') {
-                steps {
+            steps {
+                container('python') {
                     sh 'pip install -r requirements.txt'
                     sh 'py.test --junitxml test-results.xml dags/s1/force/test.py'
                 }
