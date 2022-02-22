@@ -1,10 +1,23 @@
 pipeline {
-    agent any
+    agent {
+        kubernetes {
+            yamlFile 'jenkins-pod.yaml'
+        }
+    }
     
     stages {
         stage('Test') {
-            steps {
-                echo "TODO: Add tests"
+            container('python') {
+                steps {
+                    sh 'pip install -r requirements.txt'
+                    sh 'py.test --junitxml test-results.xml dags/s1/force/test.py'
+                }
+                post {
+                    always {
+                        junit 'test-results.xml'
+                        archiveArtifacts 'test-results.xml'
+                    }
+                }
             }
         }
 
