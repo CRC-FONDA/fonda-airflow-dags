@@ -2,10 +2,10 @@ from datetime import date, timedelta
 
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import (
-    KubernetesPodOperator,
-)
+from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import \
+    KubernetesPodOperator
 from airflow.utils.dates import days_ago
+from airflow.utils.trigger_rule import TriggerRule
 from kubernetes.client import models as k8s
 
 # Read only input data paths
@@ -300,7 +300,7 @@ with DAG(
                 """
             ],
             security_context=security_context,
-            pool='restricted_pool',
+            pool="restricted_pool",
             resources=preprocess_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
@@ -387,6 +387,9 @@ with DAG(
             "MASK_RESOLUTION": str(mask_resolution),
         },
         get_logs=True,
+        # Because of a bug in Airflow 2.1.4 failures are not being treated properly, thus we need to
+        # Ignore some allegedly failed jobs
+        trigger_rule=TriggerRule.ALL_DONE,
         affinity=experiment_affinity,
         dag=dag,
     )
