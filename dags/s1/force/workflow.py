@@ -258,6 +258,7 @@ with DAG(
             },
             get_logs=True,
             affinity=experiment_affinity,
+            pool='restricted_pool',
             dag=dag,
             retries=5,
             retry_delay=timedelta(minutes=10),
