@@ -49,11 +49,40 @@ num_of_pyramid_tasks_per_tile = 10
 namespace = "default"
 
 compute_resources = {
-    "request_cpu": "1000m",
+    "request_cpu": "2",
     "request_memory": "4.5Gi",
-    "limit_cpu": "1000m",
+    "limit_cpu": "2",
     "limit_memory": "4.5Gi",
 }
+
+preprocess_resources = {
+    "request_cpu": "2",
+    "request_memory": "4.5Gi",
+    "limit_cpu": "2",
+    "limit_memory": "4.5Gi",
+}
+
+pyramid_resources = {
+    "request_cpu": "1",
+    "request_memory": "1.5Gi",
+    "limit_cpu": "1",
+    "limit_memory": "1.5Gi",
+}
+
+tsa_resources = {
+    "request_cpu": "2",
+    "request_memory": "4.5Gi",
+    "limit_cpu": "2",
+    "limit_memory": "4.5Gi",
+}
+
+mosaic_resources = {
+    "request_cpu": "1",
+    "request_memory": "1.5Gi",
+    "limit_cpu": "1",
+    "limit_memory": "1.5Gi",
+}
+
 
 dataset_volume = k8s.V1Volume(
     name="eo-data",
@@ -256,7 +285,7 @@ with DAG(
             """
             ],
             security_context=security_context,
-            resources=compute_resources,
+            resources=preprocess_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
@@ -391,7 +420,7 @@ with DAG(
                   """
             ],
             security_context=security_context,
-            resources=compute_resources,
+            resources=tsa_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             do_xcom_push=True,
@@ -435,7 +464,7 @@ with DAG(
                   """
                 ],
                 security_context=security_context,
-                resources=compute_resources,
+                resources=pyramid_resources,
                 volumes=[dataset_volume, outputs_volume],
                 volume_mounts=[dataset_volume_mount, outputs_volume_mount],
                 env_vars={
@@ -511,7 +540,7 @@ with DAG(
                   """
             ],
             security_context=security_context,
-            resources=compute_resources,
+            resources=mosaic_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
