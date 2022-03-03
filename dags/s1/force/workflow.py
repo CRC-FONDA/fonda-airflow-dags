@@ -159,7 +159,6 @@ with DAG(
     start_date=days_ago(2),
     tags=["force"],
     max_active_runs=1,
-    concurrency=100,
 ) as dag:
 
     generate_allowed_tiles = KubernetesPodOperator(
