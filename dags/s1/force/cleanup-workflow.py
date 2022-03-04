@@ -42,6 +42,38 @@ outputs_volume_mount = k8s.V1VolumeMount(
 
 security_context = k8s.V1SecurityContext(run_as_user=0)
 
+experiment_affinity = {
+    "nodeAffinity": {
+        # requiredDuringSchedulingIgnoredDuringExecution means in order
+        # for a pod to be scheduled on a node, the node must have the
+        # specified labels. However, if labels on a node change at
+        # runtime such that the affinity rules on a pod are no longer
+        # met, the pod will still continue to run on the node.
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+                {
+                    "matchExpressions": [
+                        {
+                            # When nodepools are created in Google Kubernetes
+                            # Engine, the nodes inside of that nodepool are
+                            # automatically assigned the label
+                            # 'cloud.google.com/gke-nodepool' with the value of
+                            # the nodepool's name.
+                            "key": "usedby",
+                            "operator": "In",
+                            # The label key's value that pods can be scheduled
+                            # on.
+                            "values": [
+                                "vasilis",
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
+
 # DAG
 default_args = {
     "owner": "FONDA S1",
@@ -84,6 +116,7 @@ with DAG(
         resources=compute_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
+        affinity=experiment_affinity,
         env_vars={
             "OUTPUTS": OUTPUTS_DATA_PATH,
         },
