@@ -49,40 +49,11 @@ num_of_pyramid_tasks_per_tile = 10
 namespace = "default"
 
 compute_resources = {
-    "request_cpu": "2",
+    "request_cpu": "1000m",
     "request_memory": "4.5Gi",
-    "limit_cpu": "2",
+    "limit_cpu": "1000m",
     "limit_memory": "4.5Gi",
 }
-
-preprocess_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
-}
-
-pyramid_resources = {
-    "request_cpu": "1",
-    "request_memory": "1.5Gi",
-    "limit_cpu": "1",
-    "limit_memory": "1.5Gi",
-}
-
-tsa_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
-}
-
-mosaic_resources = {
-    "request_cpu": "1",
-    "request_memory": "1.5Gi",
-    "limit_cpu": "1",
-    "limit_memory": "1.5Gi",
-}
-
 
 dataset_volume = k8s.V1Volume(
     name="eo-data",
@@ -147,8 +118,8 @@ default_args = {
     "email": ["vasilis.bountris@informatik.hu-berlin.de"],
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 10,
-    "retry_delay": timedelta(minutes=5),
+    "retries": 0,
+    "retry_delay": timedelta(minutes=100),
 }
 
 with DAG(
@@ -159,13 +130,12 @@ with DAG(
     start_date=days_ago(2),
     tags=["force"],
     max_active_runs=1,
+    concurrency=30,
 ) as dag:
 
     generate_allowed_tiles = KubernetesPodOperator(
         name="generate_allowed_tiles",
         namespace=namespace,
-        reattach_on_restart=False,
-        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="generate_allowed_tiles",
@@ -185,8 +155,6 @@ with DAG(
     generate_analysis_mask = KubernetesPodOperator(
         name="generate_analysis_mask",
         namespace=namespace,
-        reattach_on_restart=False,
-        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="generate_analysis_mask",
@@ -206,8 +174,6 @@ with DAG(
     prepare_level2 = KubernetesPodOperator(
         name="prepare_level2",
         namespace=namespace,
-        reattach_on_restart=False,
-        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="prepare_level2",
@@ -270,8 +236,6 @@ with DAG(
         preprocess_level2_task = KubernetesPodOperator(
             name="preprocess_level2_" + index,
             namespace=namespace,
-            reattach_on_restart=False,
-            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="preprocess_level2_" + index,
@@ -280,11 +244,17 @@ with DAG(
                 """\
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
-            force-l2ps `(awk '{print $1; exit}' $QUEUE_FILE)` $PARAM    
-            """
+            if force-level2 $PARAM
+            then
+                echo "DONE"
+            else
+                echo "ERROR"
+                exit 1
+            fi
+                """
             ],
             security_context=security_context,
-            resources=preprocess_resources,
+            resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
@@ -294,17 +264,15 @@ with DAG(
             },
             get_logs=True,
             affinity=experiment_affinity,
-            pool='restricted_pool',
             dag=dag,
-            retries=10,
+            retries=5,
+            retry_delay=timedelta(minutes=10),
         )
         preprocess_level2_tasks.append(preprocess_level2_task)
 
     prepare_tsa = KubernetesPodOperator(
         name="prepape_tsa",
         namespace=namespace,
-        reattach_on_restart=False,
-        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="prepare_tsa",
@@ -384,8 +352,6 @@ with DAG(
         tsa_task = KubernetesPodOperator(
             name="tsa_task_" + index,
             namespace=namespace,
-            reattach_on_restart=False,
-            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="tsa_task_" + index,
@@ -419,7 +385,7 @@ with DAG(
                   """
             ],
             security_context=security_context,
-            resources=tsa_resources,
+            resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             do_xcom_push=True,
@@ -447,8 +413,6 @@ with DAG(
             pyramid_task = KubernetesPodOperator(
                 name="pyramid_task_" + index,
                 namespace=namespace,
-                reattach_on_restart=False,
-                is_delete_operator_pod=True,
                 image="davidfrantz/force:3.6.5",
                 labels={"workflow": "force"},
                 task_id="pyramid_task_" + index,
@@ -463,7 +427,7 @@ with DAG(
                   """
                 ],
                 security_context=security_context,
-                resources=pyramid_resources,
+                resources=compute_resources,
                 volumes=[dataset_volume, outputs_volume],
                 volume_mounts=[dataset_volume_mount, outputs_volume_mount],
                 env_vars={
@@ -481,8 +445,6 @@ with DAG(
     wait_for_trends = KubernetesPodOperator(
         name="wait_for_trends",
         namespace=namespace,
-        reattach_on_restart=False,
-        is_delete_operator_pod=True,
         image="davidfrantz/force:3.6.5",
         labels={"workflow": "force"},
         task_id="wait_for_trends",
@@ -527,8 +489,6 @@ with DAG(
         mosaic_task = KubernetesPodOperator(
             name="mosaic_task_" + index,
             namespace=namespace,
-            reattach_on_restart=False,
-            is_delete_operator_pod=True,
             image="davidfrantz/force:3.6.5",
             labels={"workflow": "force"},
             task_id="mosaic_task_" + index,
@@ -539,7 +499,7 @@ with DAG(
                   """
             ],
             security_context=security_context,
-            resources=mosaic_resources,
+            resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
