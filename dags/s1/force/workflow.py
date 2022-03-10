@@ -118,8 +118,8 @@ default_args = {
     "email": ["vasilis.bountris@informatik.hu-berlin.de"],
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 0,
-    "retry_delay": timedelta(minutes=100),
+    "retries": 10,
+    "retry_delay": timedelta(minutes=10),
 }
 
 with DAG(
