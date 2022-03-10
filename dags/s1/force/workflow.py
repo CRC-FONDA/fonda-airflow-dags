@@ -244,13 +244,7 @@ with DAG(
                 """\
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
-            if force-level2 $PARAM
-            then
-                echo "DONE"
-            else
-                echo "ERROR"
-                exit 1
-            fi
+            force-l2ps `(awk '{print $1; exit}' $QUEUE_FILE)` $PARAM
                 """
             ],
             security_context=security_context,
