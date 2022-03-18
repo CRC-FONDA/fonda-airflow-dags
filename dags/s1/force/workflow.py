@@ -148,6 +148,7 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
+        reattach_on_restart=False,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -167,6 +168,7 @@ with DAG(
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
+        reattach_on_restart=False,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -257,6 +259,7 @@ with DAG(
                 "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
             },
             get_logs=True,
+            reattach_on_restart=False,
             affinity=experiment_affinity,
             dag=dag,
             retries=5,
@@ -336,6 +339,7 @@ with DAG(
             "END_DATE": end_date.isoformat(),
         },
         get_logs=True,
+        reattach_on_restart=False,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -430,6 +434,7 @@ with DAG(
                     "FILE_INDEX": file_index,
                 },
                 get_logs=True,
+                reattach_on_restart=False,
                 affinity=experiment_affinity,
                 dag=dag,
             )
@@ -473,6 +478,7 @@ with DAG(
             "DATA_FOLDERPATH": mosaic_folderpath,
         },
         get_logs=True,
+        reattach_on_restart=False,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -501,6 +507,7 @@ with DAG(
                 "MOSAIC_FOLDERPATH": mosaic_folderpath,
             },
             get_logs=True,
+            reattach_on_restart=False,
             affinity=experiment_affinity,
             dag=dag,
         )
