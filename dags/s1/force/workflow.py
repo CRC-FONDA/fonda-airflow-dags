@@ -149,6 +149,7 @@ with DAG(
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
         reattach_on_restart=False,
+        is_delete_operator_pod=True,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -169,6 +170,7 @@ with DAG(
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         get_logs=True,
         reattach_on_restart=False,
+        is_delete_operator_pod=True,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -246,8 +248,11 @@ with DAG(
                 """\
             cp $GLOBAL_PARAM $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
+            if grep -q DONE "$QUEUE_FILE"; then
+              exit 0
+            fi
             force-l2ps `(awk '{print $1; exit}' $QUEUE_FILE)` $PARAM
-            sed -i "s/QUEUED/DONE/g" $PARAM
+            sed -i "s/QUEUED/DONE/g" $QUEUE_FILE
                 """
             ],
             security_context=security_context,
@@ -261,10 +266,10 @@ with DAG(
             },
             get_logs=True,
             reattach_on_restart=False,
+            is_delete_operator_pod=True,
             affinity=experiment_affinity,
             dag=dag,
-            retries=5,
-            retry_delay=timedelta(minutes=10),
+            retry_delay=timedelta(minutes=20),
         )
         preprocess_level2_tasks.append(preprocess_level2_task)
 
@@ -341,6 +346,7 @@ with DAG(
         },
         get_logs=True,
         reattach_on_restart=False,
+        is_delete_operator_pod=True,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -436,6 +442,7 @@ with DAG(
                 },
                 get_logs=True,
                 reattach_on_restart=False,
+                is_delete_operator_pod=True,
                 affinity=experiment_affinity,
                 dag=dag,
             )
@@ -480,6 +487,7 @@ with DAG(
         },
         get_logs=True,
         reattach_on_restart=False,
+        is_delete_operator_pod=True,
         affinity=experiment_affinity,
         dag=dag,
     )
@@ -509,6 +517,7 @@ with DAG(
             },
             get_logs=True,
             reattach_on_restart=False,
+            is_delete_operator_pod=True,
             affinity=experiment_affinity,
             dag=dag,
         )
