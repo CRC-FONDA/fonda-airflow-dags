@@ -49,9 +49,9 @@ num_of_pyramid_tasks_per_tile = 10
 namespace = "default"
 
 compute_resources = {
-    "request_cpu": "1000m",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "1000m",
+    "request_cpu": "2000m",
+    "request_memory": "2.5Gi",
+    "limit_cpu": "2000m",
     "limit_memory": "4.5Gi",
 }
 
@@ -130,7 +130,6 @@ with DAG(
     start_date=days_ago(2),
     tags=["force"],
     max_active_runs=1,
-    concurrency=30,
 ) as dag:
 
     generate_allowed_tiles = KubernetesPodOperator(
@@ -265,6 +264,7 @@ with DAG(
                 "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
             },
             get_logs=True,
+            pool=restricted_pool,
             reattach_on_restart=False,
             is_delete_operator_pod=True,
             affinity=experiment_affinity,
