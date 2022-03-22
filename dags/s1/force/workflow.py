@@ -264,7 +264,7 @@ with DAG(
                 "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
             },
             get_logs=True,
-            pool=restricted_pool,
+            pool='restricted_pool',
             reattach_on_restart=False,
             is_delete_operator_pod=True,
             affinity=experiment_affinity,
