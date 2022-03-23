@@ -52,7 +52,7 @@ compute_resources = {
     "request_cpu": "2000m",
     "request_memory": "1.5Gi",
     "limit_cpu": "2000m",
-    "limit_memory": "2.5Gi",
+    "limit_memory": "4Gi",
 }
 
 dataset_volume = k8s.V1Volume(
@@ -253,6 +253,7 @@ with DAG(
             if grep -q DONE "$QUEUE_FILE"; then
               exit 0
             fi
+            echo YO
             force-l2ps `(awk '{print $1; exit}' $QUEUE_FILE)` $PARAM
             sed -i "s/QUEUED/DONE/g" $QUEUE_FILE
                 """
