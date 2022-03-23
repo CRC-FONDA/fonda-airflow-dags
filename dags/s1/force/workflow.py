@@ -50,9 +50,9 @@ namespace = "default"
 
 compute_resources = {
     "request_cpu": "2000m",
-    "request_memory": "2.5Gi",
+    "request_memory": "1.5Gi",
     "limit_cpu": "2000m",
-    "limit_memory": "4.5Gi",
+    "limit_memory": "2.5Gi",
 }
 
 dataset_volume = k8s.V1Volume(
@@ -269,6 +269,7 @@ with DAG(
             is_delete_operator_pod=True,
             affinity=experiment_affinity,
             dag=dag,
+            execution_timeout=timedelta(minutes=30),
             retry_delay=timedelta(minutes=20),
         )
         preprocess_level2_tasks.append(preprocess_level2_task)
