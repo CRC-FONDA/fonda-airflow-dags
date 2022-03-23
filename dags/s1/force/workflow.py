@@ -246,9 +246,9 @@ with DAG(
             arguments=[
                 """\
             cp $GLOBAL_PARAM $PARAM
-            mkdir -p /data/outputs/fake
-            mkdir -p /data/outputs/fake/$FAKE_INDEX
-            sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/outputs/fake/$FAKE_INDEX" $PARAM
+            # mkdir -p /data/outputs/fake
+            # mkdir -p /data/outputs/fake/$FAKE_INDEX
+            # sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/outputs/fake/$FAKE_INDEX" $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
             if grep -q DONE "$QUEUE_FILE"; then
               exit 0
