@@ -245,6 +245,9 @@ with DAG(
             cmds=["/bin/sh", "-c"],
             arguments=[
                 """\
+            sleep 600
+            sleep $FAKE_INDEX
+            exit 0
             cp $GLOBAL_PARAM $PARAM
             mkdir -p /data/outputs/fake
             mkdir -p /data/outputs/fake/$FAKE_INDEX
