@@ -246,6 +246,9 @@ with DAG(
             arguments=[
                 """\
             cp $GLOBAL_PARAM $PARAM
+            mkdir -p /data/outputs/fake
+            mkdir -p /data/outputs/fake/$FAKE_INDEX
+            sed -i "/^DIR_LEVEL2 /cDIR_LEVEL2 = /data/outputs/fake/$FAKE_INDEX" $PARAM
             sed -i "/^FILE_QUEUE /cFILE_QUEUE = $QUEUE_FILE" $PARAM
             if grep -q DONE "$QUEUE_FILE"; then
               exit 0
@@ -262,6 +265,7 @@ with DAG(
                 "GLOBAL_PARAM": "/data/outputs/param_files/ard.prm",
                 "PARAM": f"/data/outputs/param_files/ard_{index}.prm",
                 "QUEUE_FILE": f"/data/outputs/queue_files/queue_{index}.txt",
+                "FAKE_INDEX": f"{index}",
             },
             get_logs=True,
             pool='restricted_pool',
