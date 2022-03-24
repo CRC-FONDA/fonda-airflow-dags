@@ -49,10 +49,10 @@ num_of_pyramid_tasks_per_tile = 10
 namespace = "default"
 
 compute_resources = {
-    "request_cpu": "1500m",
+    "request_cpu": "2000m",
     "request_memory": "1.5Gi",
     "limit_cpu": "2000m",
-    "limit_memory": "4Gi",
+    "limit_memory": "4.5Gi",
 }
 
 dataset_volume = k8s.V1Volume(
