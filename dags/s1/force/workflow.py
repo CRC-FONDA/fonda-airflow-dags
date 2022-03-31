@@ -1,4 +1,4 @@
-from datetime import date, timedelta
+from datetime import date, timedelta, datetime
 
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
@@ -127,7 +127,7 @@ with DAG(
     default_args=default_args,
     description="Airflow implementation of a FORCE workflow",
     schedule_interval="@once",
-    start_date=date(2022, 3, 25),
+    start_date=datetime(2022, 3, 25),
     tags=["force"],
     max_active_runs=1,
 ) as dag:
