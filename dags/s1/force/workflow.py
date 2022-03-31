@@ -127,7 +127,7 @@ with DAG(
     default_args=default_args,
     description="Airflow implementation of a FORCE workflow",
     schedule_interval="@once",
-    start_date=days_ago(2),
+    start_date=date(2022, 3, 25),
     tags=["force"],
     max_active_runs=1,
 ) as dag:
