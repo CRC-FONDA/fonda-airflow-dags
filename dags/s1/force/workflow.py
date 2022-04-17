@@ -1,4 +1,5 @@
 from datetime import date, timedelta, datetime
+from random import shuffle
 
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
@@ -234,7 +235,13 @@ with DAG(
     )
 
     preprocess_level2_tasks = []
-    for i in range(parallel_factor):
+
+    # Randomize task order through their indices, because in Airflow
+    # they run in the same order they have on the preprocess_level2_tasks list
+    preprocess_level2_tasks_indices = [i for i in range(parallel_factor)]
+    shuffle(preprocess_level2_tasks_indices)
+
+    for i in preprocess_level2_tasks_indices:
         index = f"{i:04d}"
         preprocess_level2_task = KubernetesPodOperator(
             name="preprocess_level2_" + index,
@@ -269,7 +276,7 @@ with DAG(
                 "FAKE_INDEX": f"{index}",
             },
             get_logs=True,
-            pool='restricted_pool',
+            pool="restricted_pool",
             reattach_on_restart=False,
             is_delete_operator_pod=True,
             affinity=experiment_affinity,
@@ -449,6 +456,7 @@ with DAG(
                 get_logs=True,
                 reattach_on_restart=False,
                 is_delete_operator_pod=True,
+                retry_delay=timedelta(minutes=5),
                 affinity=experiment_affinity,
                 dag=dag,
             )
