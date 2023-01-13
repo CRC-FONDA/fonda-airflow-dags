@@ -11,12 +11,16 @@ OUTPUTS_DATA_PATH = "/data/outputs"
 
 namespace = "default"
 
-compute_resources = {
-    "request_cpu": "1000m",
-    "request_memory": "1Gi",
-    "limit_cpu": "1000m",
-    "limit_memory": "1Gi",
-}
+compute_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "1000m",
+        "memory": "1Gi"
+    },
+    limits={
+        "cpu": "1000m",
+        "memory": "1Gi"
+    }
+)
 
 dataset_volume = k8s.V1Volume(
     name="eo-data",
@@ -113,7 +117,7 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         affinity=experiment_affinity,
