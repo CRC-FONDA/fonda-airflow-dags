@@ -38,12 +38,16 @@ dag = DAG(
 # Kubernetes config: namespace, resources, volume and volume_mounts
 #
 namespace = "airflow"
-compute_resources = {
-    'request_cpu': '200m',
-    'request_memory': '512Mi',
-    'limit_cpu': '500m',
-    'limit_memory': '1Gi'
-}
+compute_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "200m",
+        "memory": "512Mi"
+    },
+    limits={
+        "cpu": "500m",
+        "memory": "1Gi"
+    }
+)
 
 #
 # Use this for local testing
