@@ -26,7 +26,7 @@
         arguments=[
             f"wget -O auxiliary.tar.gz https://box.hu-berlin.de/f/c4d90fc5b07c4955b979/?dl=1 && tar -xzf auxiliary.tar.gz && cp -r EO-01/input {MOUNT_DATA_PATH}"
         ],
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[datasets_volume, outputs_volume],
         security_context=security_context,
         volume_mounts=[datasets_volume_mount, outputs_volume_mount],
@@ -52,7 +52,7 @@
             mkdir -p {image_folderpath} && \
             force-level1-csd -s {sensors_level1} -d {daterange} -c 0,70 {image_metadata_folderpath} {image_folderpath} {queue_filepath} {aoi_filepath}"
         ],
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[datasets_volume, outputs_volume],
         volume_mounts=[datasets_volume_mount, outputs_volume_mount],
         security_context=security_context,
