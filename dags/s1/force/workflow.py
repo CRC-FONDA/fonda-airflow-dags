@@ -282,7 +282,7 @@ with DAG(
         pool='restricted_pool',
         env_vars={
             "QUEUE_FILEPATH": queue_filepath,
-            "PARALLEL_FACTOR": parallel_factor,
+            "PARALLEL_FACTOR": str(parallel_factor),
             "CUBEFILE": datacube_filepath,
             "DEM": dem_folderpath,
             "WVDB": wvdb,
