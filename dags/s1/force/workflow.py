@@ -195,7 +195,7 @@ with DAG(
             "force-tile-extent $AOI_FILEPATH $DATACUBE_FOLDERPATH $ALLOWED_TILES_FILEPATH"
         ],
         security_context=security_context,
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
@@ -219,7 +219,7 @@ with DAG(
             "mkdir -p $MASKS_FOLDERPATH && cp $DATACUBE_FOLDERPATH/datacube-definition.prj $MASKS_FOLDERPATH && force-cube $AOI_FILEPATH $MASKS_FOLDERPATH rasterize $MASK_RESOLUTION"
         ],
         security_context=security_context,
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
@@ -276,7 +276,7 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources=preprocess_resources,
+        container_resources=preprocess_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         pool='restricted_pool',
@@ -287,7 +287,7 @@ with DAG(
             "DEM": dem_folderpath,
             "WVDB": wvdb,
             "TILE": allowed_tiles_filepath,
-            "NTHREAD": str(int(preprocess_resources["request_cpu"]) * 2),
+            "NTHREAD": str(float(preprocess_resources.requests["cpu"]) * 2),
             "PARAM": "/data/outputs/param_files/ard.prm",
         },
         get_logs=True,
@@ -313,7 +313,7 @@ with DAG(
                 """
             ],
             security_context=security_context,
-            resources=preprocess_resources,
+            container_resources=preprocess_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
@@ -382,12 +382,12 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources=compute_resources,
+        container_resources=compute_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
             "TILE": allowed_tiles_filepath,
-            "NTHREAD": str(int(preprocess_resources["request_cpu"]) * 2),
+            "NTHREAD": str(float(compute_resources.requests["cpu"]) * 2),
             "PARAM": "tsa.prm",
             "ENDMEMBER": endmember_filepath,
             "ARD_FOLDER": ard_folderpath,
@@ -440,7 +440,7 @@ with DAG(
                 """
             ],
             security_context=security_context,
-            resources=tsa_resources,
+            container_resources=tsa_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             do_xcom_push=True,
@@ -482,7 +482,7 @@ with DAG(
                     """
                 ],
                 security_context=security_context,
-                resources=pyramid_resources,
+                container_resources=pyramid_resources,
                 volumes=[dataset_volume, outputs_volume],
                 volume_mounts=[dataset_volume_mount, outputs_volume_mount],
                 env_vars={
@@ -526,7 +526,7 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources=mosaic_resources,
+        container_resources=mosaic_resources,
         volumes=[dataset_volume, outputs_volume],
         volume_mounts=[dataset_volume_mount, outputs_volume_mount],
         env_vars={
@@ -554,7 +554,7 @@ with DAG(
                 """
             ],
             security_context=security_context,
-            resources=compute_resources,
+            container_resources=compute_resources,
             volumes=[dataset_volume, outputs_volume],
             volume_mounts=[dataset_volume_mount, outputs_volume_mount],
             env_vars={
@@ -591,7 +591,7 @@ with DAG(
             """
         ],
         security_context=security_context,
-        resources={
+        container_resources={
             "request_cpu": "2000m",
             "request_memory": "10Gi",
         },
