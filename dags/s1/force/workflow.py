@@ -35,7 +35,7 @@ sensors_level1 = "LT04,LT05,LE07,S2A"
 start_date = date(1984, 1, 1)
 end_date = date(2006, 12, 31)
 daterange = start_date.strftime("%Y%m%d") + "," + end_date.strftime("%Y%m%d")
-mask_resolution = 30
+mask_resolution = str(30) 
 
 # Run parameters
 num_of_tiles = 28
