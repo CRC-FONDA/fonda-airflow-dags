@@ -50,40 +50,61 @@ num_of_pyramid_tasks_per_tile = 10
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
 
-compute_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
-}
+compute_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "2",
+        "memory": "1.5Gi",
+        },
+    limits={
+        "cpu": "2",
+        "memory": "4.5Gi",
+    }
+)
 
-preprocess_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
-}
+preprocess_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "2",
+        "memory": "4.5Gi",
+        },
+    limits={
+        "cpu": "2",
+        "memory": "4.5Gi",
+    }
+)
 
-pyramid_resources = {
-    "request_cpu": "1",
-    "request_memory": "1.5Gi",
-    "limit_cpu": "1",
-    "limit_memory": "1.5Gi",
-}
 
-tsa_resources = {
-    "request_cpu": "2",
-    "request_memory": "4.5Gi",
-    "limit_cpu": "2",
-    "limit_memory": "4.5Gi",
-}
+pyramid_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "1",
+        "memory": "1.5Gi",
+        },
+    limits={
+        "cpu": "1",
+        "memory": "1.5Gi",
+    }
+)
 
-mosaic_resources = {
-    "request_cpu": "1",
-    "request_memory": "1.5Gi",
-    "limit_cpu": "1",
-    "limit_memory": "1.5Gi",
-}
+tsa_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "2",
+        "memory": "4.5Gi",
+        },
+    limits={
+        "cpu": "2",
+        "memory": "4.5Gi",
+    }
+)
+
+mosaic_resources = k8s.V1ResourceRequirements(
+    requests={
+        "cpu": "1",
+        "memory": "1.5Gi",
+        },
+    limits={
+        "cpu": "1",
+        "memory": "1.5Gi",
+    }
+)
 
 
 dataset_volume = k8s.V1Volume(
