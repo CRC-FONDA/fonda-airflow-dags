@@ -297,6 +297,7 @@ with DAG(
     )
 
 
+    preprocess_level2_tasks = []
     # Randomize task order through their indices, because in Airflow
     # they run in the same order they have on the preprocess_level2_tasks list
     preprocess_level2_tasks_indices = [i for i in range(parallel_factor)]
