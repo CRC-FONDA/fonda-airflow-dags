@@ -80,8 +80,8 @@ pyramid_resources = k8s.V1ResourceRequirements(
         "memory": "1.5Gi",
         },
     limits={
-        "cpu": "1",
-        "memory": "1.5Gi",
+        "cpu": "2",
+        "memory": "4.5Gi",
     }
 )
 
