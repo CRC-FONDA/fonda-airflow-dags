@@ -180,6 +180,7 @@ with DAG(
     description="Airflow implementation of a FORCE workflow",
     schedule_interval="@once",
     start_date=days_ago(2),
+    max_active_tasks=5,
     tags=["force"],
     max_active_runs=1,
 ) as dag:
