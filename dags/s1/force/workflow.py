@@ -1,4 +1,5 @@
 from datetime import date, timedelta
+from random import shuffle
 
 from airflow import DAG
 from airflow.operators.dummy_operator import DummyOperator
@@ -79,8 +80,8 @@ pyramid_resources = k8s.V1ResourceRequirements(
         "memory": "1.5Gi",
         },
     limits={
-        "cpu": "1",
-        "memory": "1.5Gi",
+        "cpu": "2",
+        "memory": "4.5Gi",
     }
 )
 
@@ -296,8 +297,14 @@ with DAG(
         dag=dag,
     )
 
+
     preprocess_level2_tasks = []
-    for i in range(parallel_factor):
+    # Randomize task order through their indices, because in Airflow
+    # they run in the same order they have on the preprocess_level2_tasks list
+    preprocess_level2_tasks_indices = [i for i in range(parallel_factor)]
+    shuffle(preprocess_level2_tasks_indices)
+
+    for i in preprocess_level2_tasks_indices:
         index = f"{i:04d}"
         preprocess_level2_task = KubernetesPodOperator(
             name="preprocess_level2_" + index,
