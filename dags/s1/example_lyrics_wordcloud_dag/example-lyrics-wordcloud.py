@@ -97,6 +97,7 @@ experiment_affinity = {
             ]
         }
     }
+}
 
 # lyrics-wordcloud-volume is an existing PersistentVolumeClaim in the CephFS storage
 volume = k8s.V1Volume(
