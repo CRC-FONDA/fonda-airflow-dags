@@ -59,7 +59,44 @@ compute_resources = k8s.V1ResourceRequirements(
 #        type="Directory"
 #    )
 # )
+# Define the secret reference
+env_from_secret = k8s.V1EnvFromSource(
+    secret_ref=k8s.V1SecretEnvSource(
+        name='genius-api-key-secret'  # Name of the Kubernetes secret
+    )
+)
 
+
+experiment_affinity = {
+    "nodeAffinity": {
+        # requiredDuringSchedulingIgnoredDuringExecution means in order
+        # for a pod to be scheduled on a node, the node must have the
+        # specified labels. However, if labels on a node change at
+        # runtime such that the affinity rules on a pod are no longer
+        # met, the pod will still continue to run on the node.
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+                {
+                    "matchExpressions": [
+                        {
+                            # When nodepools are created in Google Kubernetes
+                            # Engine, the nodes inside of that nodepool are
+                            # automatically assigned the label
+                            # 'cloud.google.com/gke-nodepool' with the value of
+                            # the nodepool's name.
+                            "key": "usedby",
+                            "operator": "In",
+                            # The label key's value that pods can be scheduled
+                            # on.
+                            "values": [
+                                "vasilis",
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+    }
 
 # lyrics-wordcloud-volume is an existing PersistentVolumeClaim in the CephFS storage
 volume = k8s.V1Volume(
@@ -116,8 +153,9 @@ with dag:
             container_resources=compute_resources,
             volumes=[volume],
             volume_mounts=[volume_mount],
-            env_vars=env_vars,
+            env_from=[env_from_secret],  # Use env_from instead of env_vars
             get_logs=True,
+            affinity=experiment_affinity,
             dag=dag)
         download_task += 1
         # Set downstream tasks
