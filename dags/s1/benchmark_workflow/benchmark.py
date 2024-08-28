@@ -3,6 +3,7 @@ from airflow import DAG
 from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
+import time
 
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
@@ -33,9 +34,9 @@ default_args = {
 }
 
 with DAG(
-    "cpu_intensive_task",
+    "cpu_intensive_task_15_min",
     default_args=default_args,
-    description="A simple DAG to run a CPU intensive task",
+    description="A simple DAG to run a CPU intensive task for 15 minutes",
     schedule_interval="@once",
     start_date=days_ago(1),
     max_active_tasks=1,
@@ -43,7 +44,7 @@ with DAG(
 ) as dag:
 
     cpu_intensive_task = KubernetesPodOperator(
-        name="cpu_intensive_task",
+        name="cpu_intensive_task_15_min",
         namespace=namespace,
         image="python:3.8-slim",
         labels={"workflow": "cpu_intensive_task"},
@@ -56,8 +57,11 @@ import multiprocessing
 
 def cpu_bound_task():
     result = 0
-    for i in range(1, 100000000):
-        result += i
+    start_time = time.time()
+    # Run the loop for 15 minutes
+    while time.time() - start_time < 15 * 60:
+        for i in range(1, 1000000):
+            result += i
     print(f"Result: {result}")
 
 if __name__ == "__main__":
