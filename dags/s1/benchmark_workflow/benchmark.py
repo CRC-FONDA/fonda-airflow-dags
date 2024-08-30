@@ -116,15 +116,16 @@ if __name__ == "__main__":
             arguments=[
                 """
 import time
-import numpy as np
 
 def ram_bound_task():
     duration = 5 * 60  # Run for 5 minutes
-    # Allocate 2 GB of RAM
-    large_array = np.ones((500, 500, 1000), dtype=np.float64)
+    large_list = []
+    # Allocate memory by filling a large list
+    for _ in range(50000000):  # Adjust this number to control memory usage
+        large_list.append(" " * 100)  # Each entry takes about 100 bytes
     start_time = time.time()
     while time.time() - start_time < duration:
-        large_array *= 1.000001  # Perform some operation to keep the RAM active
+        large_list = [x.replace(" ", " ") for x in large_list]  # Keep the memory active
     print("RAM intensive task completed")
 
 if __name__ == "__main__":
@@ -149,15 +150,16 @@ if __name__ == "__main__":
         arguments=[
             """
 import time
-import numpy as np
 
 def combined_task():
     duration = 5 * 60  # Run for 5 minutes
-    # Allocate 1 GB of RAM
-    large_array = np.ones((250, 250, 1000), dtype=np.float64)
+    large_list = []
+    # Allocate memory by filling a large list
+    for _ in range(25000000):  # Adjust this number to control memory usage
+        large_list.append(" " * 100)  # Each entry takes about 100 bytes
     start_time = time.time()
     while time.time() - start_time < duration:
-        large_array *= 1.000001  # Perform some operation to keep the RAM active
+        large_list = [x.replace(" ", " ") for x in large_list]  # Keep the memory active
         for i in range(1, 1000000):  # CPU operation
             pass
     print("Combined CPU and RAM intensive task completed")
@@ -182,15 +184,16 @@ if __name__ == "__main__":
         arguments=[
             """
 import time
-import numpy as np
 
 def combined_task():
     duration = 5 * 60  # Run for 5 minutes
-    # Allocate 1 GB of RAM
-    large_array = np.ones((250, 250, 1000), dtype=np.float64)
+    large_list = []
+    # Allocate memory by filling a large list
+    for _ in range(25000000):  # Adjust this number to control memory usage
+        large_list.append(" " * 100)  # Each entry takes about 100 bytes
     start_time = time.time()
     while time.time() - start_time < duration:
-        large_array *= 1.000001  # Perform some operation to keep the RAM active
+        large_list = [x.replace(" ", " ") for x in large_list]  # Keep the memory active
         for i in range(1, 1000000):  # CPU operation
             pass
     print("Combined CPU and RAM intensive task completed")
