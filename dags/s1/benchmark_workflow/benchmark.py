@@ -9,6 +9,38 @@ from kubernetes.client import models as k8s
 # Kubernetes config: namespace, resources, volume and volume_mounts
 namespace = "default"
 
+experiment_affinity = {
+    "nodeAffinity": {
+        # requiredDuringSchedulingIgnoredDuringExecution means in order
+        # for a pod to be scheduled on a node, the node must have the
+        # specified labels. However, if labels on a node change at
+        # runtime such that the affinity rules on a pod are no longer
+        # met, the pod will still continue to run on the node.
+        "requiredDuringSchedulingIgnoredDuringExecution": {
+            "nodeSelectorTerms": [
+                {
+                    "matchExpressions": [
+                        {
+                            # When nodepools are created in Google Kubernetes
+                            # Engine, the nodes inside of that nodepool are
+                            # automatically assigned the label
+                            # 'cloud.google.com/gke-nodepool' with the value of
+                            # the nodepool's name.
+                            "key": "usedby",
+                            "operator": "In",
+                            # The label key's value that pods can be scheduled
+                            # on.
+                            "values": [
+                                "vasilis",
+                            ],
+                        }
+                    ]
+                }
+            ]
+        }
+    }
+}
+
 # Define resources for CPU-intensive tasks: 1 CPU requested and limited
 cpu_intensive_resources = k8s.V1ResourceRequirements(
     requests={
@@ -78,6 +110,7 @@ with DAG(
             labels={"workflow": "cpu_intensive_task"},
             task_id=f"cpu_intensive_task_{i}",
             cmds=["python", "-c"],
+            affinity=experiment_affinity,
             arguments=[
                 f"""
 import time
@@ -113,6 +146,7 @@ if __name__ == "__main__":
             labels={"workflow": "ram_intensive_task"},
             task_id=f"ram_intensive_task_{i}",
             cmds=["python", "-c"],
+            affinity=experiment_affinity,
             arguments=[
                 """
 import time
@@ -181,6 +215,7 @@ if __name__ == "__main__":
         labels={"workflow": "combined_intensive_task"},
         task_id="combined_intensive_task_2",
         cmds=["python", "-c"],
+        affinity=experiment_affinity,
         arguments=[
             """
 import time
