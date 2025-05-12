@@ -243,6 +243,32 @@ if __name__ == "__main__":
         dag=dag,
     )
 
+        # Failing task to demonstrate error handling in the DAG
+    failing_task = KubernetesPodOperator(
+        name="failing_task",
+        namespace=namespace,
+        image="python:3.8-slim",
+        labels={"workflow": "failing_task"},
+        task_id="failing_task",
+        cmds=["python", "-c"],
+        affinity=experiment_affinity,
+        arguments=[
+            """
+import sys
+print("This task is designed to fail")
+sys.exit(1)  # Exit with a non-zero status to indicate failure
+            """
+        ],
+        security_context=security_context,
+        container_resources=combined_resources,
+        get_logs=True,
+        dag=dag,
+    )
+
+    # Adjust dependencies: The failing task should run after all CPU and RAM intensive tasks
+    failing_task.set_upstream(cpu_tasks + ram_tasks)
+
+
     # Set dependencies: all CPU and RAM intensive tasks must complete before combined tasks run
     combined_task_1.set_upstream(cpu_tasks + ram_tasks)
     combined_task_2.set_upstream(cpu_tasks + ram_tasks)
