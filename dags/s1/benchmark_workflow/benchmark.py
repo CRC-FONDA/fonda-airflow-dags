@@ -172,7 +172,7 @@ print("Combined intensive task 2 completed")
             name=f"failing_task_{i}",
             namespace=namespace,
             image="python:3.8-slim",
-            task_id="failing_task",
+            task_id=f"failing_task_{i}",
             cmds=["python", "-c"],
             arguments=[
                 """
