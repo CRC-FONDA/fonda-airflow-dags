@@ -87,7 +87,7 @@ default_args = {
     "email_on_failure": False,
     "email_on_retry": False,
     "retries": 1,
-    "retry_delay": timedelta(minutes=5),
+    "retry_delay": timedelta(minutes=1),
 }
 
 with DAG(
@@ -118,7 +118,7 @@ import random
 
 def cpu_bound_task():
     result = 0
-    duration = random.randint(5, 15) * 60  # Randomly choose between 5 and 15 minutes
+    duration = random.randint(1, 2) * 60  # Randomly choose between 5 and 15 minutes
     start_time = time.time()
     while time.time() - start_time < duration:
         for i in range(1, 1000000):
@@ -152,7 +152,7 @@ if __name__ == "__main__":
 import time
 
 def ram_bound_task():
-    duration = 5 * 60  # Run for 5 minutes
+    duration = 1 * 60  # Run for 5 minutes
     large_list = []
     # Allocate memory by filling a large list
     for _ in range(50000000):  # Adjust this number to control memory usage
@@ -186,7 +186,7 @@ if __name__ == "__main__":
 import time
 
 def combined_task():
-    duration = 5 * 60  # Run for 5 minutes
+    duration = 1 * 60  # Run for 5 minutes
     large_list = []
     # Allocate memory by filling a large list
     for _ in range(25000000):  # Adjust this number to control memory usage
@@ -221,7 +221,7 @@ if __name__ == "__main__":
 import time
 
 def combined_task():
-    duration = 5 * 60  # Run for 5 minutes
+    duration = 1 * 60  # Run for 5 minutes
     large_list = []
     # Allocate memory by filling a large list
     for _ in range(25000000):  # Adjust this number to control memory usage
