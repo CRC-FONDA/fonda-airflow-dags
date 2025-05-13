@@ -1,10 +1,12 @@
-from airflow import DAG
-from datetime import timedelta
 import time
+from datetime import timedelta
+
+from airflow import DAG
+from airflow.operators.bash_operator import BashOperator
 from airflow.operators.dummy import DummyOperator
 from airflow.operators.python_operator import PythonOperator
-from airflow.operators.bash_operator import BashOperator
-from airflow.providers.cncf.kubernetes.operators.kubernetes_pod import KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import \
+    KubernetesPodOperator
 from airflow.utils.dates import days_ago
 
 
