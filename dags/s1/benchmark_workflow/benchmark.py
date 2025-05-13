@@ -67,6 +67,7 @@ with DAG(
     for i in range(1, 4):
         cpu_task = KubernetesPodOperator(
             name=f"cpu_intensive_task_{i}",
+            affinity=experiment_affinity,
             namespace=namespace,
             image="python:3.8-slim",
             task_id=f"cpu_intensive_task_{i}",
@@ -94,6 +95,7 @@ print("CPU intensive task completed")
     for i in range(1, 3):
         ram_task = KubernetesPodOperator(
             name=f"ram_intensive_task_{i}",
+            affinity=experiment_affinity,
             namespace=namespace,
             image="python:3.8-slim",
             task_id=f"ram_intensive_task_{i}",
@@ -120,6 +122,7 @@ print("RAM intensive task completed")
     combined_task_1 = KubernetesPodOperator(
         name="combined_intensive_task_1",
         namespace=namespace,
+        affinity=experiment_affinity,
         image="python:3.8-slim",
         task_id="combined_intensive_task_1",
         cmds=["python", "-c"],
@@ -143,6 +146,7 @@ print("Combined intensive task 1 completed")
     combined_task_2 = KubernetesPodOperator(
         name="combined_intensive_task_2",
         namespace=namespace,
+        affinity=experiment_affinity,
         image="python:3.8-slim",
         task_id="combined_intensive_task_2",
         cmds=["python", "-c"],
@@ -170,6 +174,7 @@ print("Combined intensive task 2 completed")
     for i in range(1, 4):
         failing_task = KubernetesPodOperator(
             name=f"failing_task_{i}",
+            affinity=experiment_affinity,
             namespace=namespace,
             image="python:3.8-slim",
             task_id=f"failing_task_{i}",
