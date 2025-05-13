@@ -179,7 +179,7 @@ print("Combined intensive task 2 completed")
 import sys
 import random
 
-if random.random() < 0.5:
+if random.random() < 0.8:
     print("Task failed")
     sys.exit(1)
 else:
