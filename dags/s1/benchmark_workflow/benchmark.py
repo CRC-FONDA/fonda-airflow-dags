@@ -49,7 +49,7 @@ default_args = {
     "depends_on_past": False,
     "email_on_failure": False,
     "email_on_retry": False,
-    "retries": 1,
+    "retries": 0,
     "retry_delay": timedelta(minutes=1),
 }
 
@@ -184,11 +184,7 @@ print("Combined intensive task 2 completed")
 import sys
 import random
 
-if random.random() < 0.8:
-    print("Task failed")
-    sys.exit(1)
-else:
-    print("Task succeeded")
+sys.exit(1)
 """
             ],
             security_context=security_context,
