@@ -60,7 +60,7 @@ default_args = {
 }
 
 with DAG(
-    "dynamic_cpu_and_ram_intensive_tasks_with_dependencies",
+    "synthetic_medium",
     default_args=default_args,
     description="A dynamically configurable DAG with CPU, RAM, Combined, and Failing tasks",
     schedule_interval="@once",

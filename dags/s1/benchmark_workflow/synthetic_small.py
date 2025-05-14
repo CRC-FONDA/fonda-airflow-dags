@@ -1,8 +1,10 @@
-from datetime import timedelta
 import random
 import time
+from datetime import timedelta
+
 from airflow import DAG
-from airflow.providers.cncf.kubernetes.operators.pod import KubernetesPodOperator
+from airflow.providers.cncf.kubernetes.operators.pod import \
+    KubernetesPodOperator
 from airflow.utils.dates import days_ago
 from kubernetes.client import models as k8s
 
@@ -54,7 +56,7 @@ default_args = {
 }
 
 with DAG(
-    "cpu_and_ram_intensive_tasks_with_dependencies",
+    "synthetic_small",
     default_args=default_args,
     description="A DAG with CPU and RAM intensive tasks and dependencies",
     schedule_interval="@once",
