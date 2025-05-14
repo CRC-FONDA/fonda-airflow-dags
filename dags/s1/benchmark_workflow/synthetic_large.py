@@ -60,7 +60,7 @@ default_args = {
 }
 
 with DAG(
-    "synthetic_medium",
+    "synthetic_large",
     default_args=default_args,
     description="A dynamically configurable DAG with CPU, RAM, Combined, and Failing tasks",
     schedule_interval="@once",
