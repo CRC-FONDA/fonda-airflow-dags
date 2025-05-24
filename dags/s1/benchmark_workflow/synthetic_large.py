@@ -65,7 +65,7 @@ with DAG(
     description="A dynamically configurable DAG with CPU, RAM, Combined, and Failing tasks",
     schedule_interval="@once",
     start_date=days_ago(1),
-    max_active_tasks=5,
+    max_active_tasks=20,
     tags=["dynamic"],
 ) as dag:
 
@@ -92,7 +92,6 @@ print("CPU intensive task completed")
             ],
             security_context=security_context,
             container_resources=cpu_intensive_resources,
-            get_logs=True,
             dag=dag,
         )
         cpu_tasks.append(cpu_task)
@@ -120,7 +119,6 @@ print("RAM intensive task completed")
             ],
             security_context=security_context,
             container_resources=ram_intensive_resources,
-            get_logs=True,
             dag=dag,
         )
         ram_tasks.append(ram_task)
@@ -167,7 +165,6 @@ sys.exit(1)
 """],
             security_context=security_context,
             container_resources=combined_resources,
-            get_logs=True,
             dag=dag,
         )
         failing_task.set_upstream(cpu_tasks + ram_tasks)
