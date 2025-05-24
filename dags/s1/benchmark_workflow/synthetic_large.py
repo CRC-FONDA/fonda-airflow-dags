@@ -65,7 +65,7 @@ with DAG(
     description="A dynamically configurable DAG with CPU, RAM, Combined, and Failing tasks",
     schedule_interval="@once",
     start_date=days_ago(1),
-    max_active_tasks=20,
+    max_active_tasks=5,
     tags=["dynamic"],
 ) as dag:
 
