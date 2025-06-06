@@ -45,9 +45,9 @@ combined_resources = k8s.V1ResourceRequirements(
 security_context = k8s.V1SecurityContext(run_as_user=0)
 
 # Dynamic task counts
-CPU_TASK_COUNT = 200
-RAM_TASK_COUNT = 200
-COMBINED_TASK_COUNT = 125
+CPU_TASK_COUNT = 400
+RAM_TASK_COUNT = 400
+COMBINED_TASK_COUNT = 175
 FAILING_TASK_COUNT = 25
 
 default_args = {
